@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
 import 'package:kolzumo_app/controllers/thermal_printer_controller.dart';
