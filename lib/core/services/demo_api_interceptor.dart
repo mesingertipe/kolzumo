@@ -13,7 +13,7 @@ class DemoApiInterceptor extends Interceptor {
   static const String demoUsername = 'demo';
   static const String demoPassword = '1234';
 
-  bool _isDemoMode = false;
+  bool _isDemoMode = true;
   bool get isDemoMode => _isDemoMode;
   set isDemoMode(bool val) => _isDemoMode = val;
   bool _demoOrderApproved = false;

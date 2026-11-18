@@ -26,7 +26,7 @@ class AppConfig extends ChangeNotifier {
   );
   static const bool _defaultDemoModeEnabled = bool.fromEnvironment(
     'DEMO_MODE_ENABLED',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   String _apiBaseUrl = _defaultApiBaseUrl;

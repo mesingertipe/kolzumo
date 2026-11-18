@@ -402,10 +402,9 @@ class _FormValidationState extends State<FormValidation> {
               child: OutlinedButton.icon(
                 onPressed: auth.isAuthenticating ? null : _handleBiometricLogin,
                 icon: const Icon(Icons.fingerprint_rounded, size: 24),
-                label: Text(
-                  'Ingresar con Biometría (${bioService.savedUsername})',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                label: const Text(
+                  'Ingresar con Huella / Face ID',
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ),
