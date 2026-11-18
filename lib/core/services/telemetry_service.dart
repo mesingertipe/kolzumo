@@ -7,6 +7,7 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 import '../../firebase_options.dart';
 import '../config/app_config.dart';
+import 'demo_api_interceptor.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -94,8 +95,7 @@ class TelemetryService extends ChangeNotifier {
       await remoteConfig.setConfigSettings(
         RemoteConfigSettings(
           fetchTimeout: const Duration(seconds: 10),
-          minimumFetchInterval:
-              kDebugMode ? const Duration(minutes: 1) : const Duration(minutes: 30),
+          minimumFetchInterval: Duration.zero,
         ),
       );
 
@@ -148,6 +148,11 @@ class TelemetryService extends ChangeNotifier {
       storeUrlAndroid: rc.getString('store_url_android'),
       storeUrlIos: rc.getString('store_url_ios'),
     );
+    if (rc.getBool('demo_mode_enabled')) {
+      DemoApiInterceptor.instance.activateDemoMode();
+    } else {
+      DemoApiInterceptor.instance.deactivateDemoMode();
+    }
     notifyListeners();
   }
 
