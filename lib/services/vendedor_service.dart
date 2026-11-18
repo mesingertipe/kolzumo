@@ -1,27 +1,24 @@
 import 'package:dio/dio.dart';
-
+import 'package:kolzumo_app/core/network/api_client.dart';
 import '../infrastructure/models/vendedor_model.dart';
 
 class VendedorService {
+  final Dio _dio = ApiClient.instance.dio;
 
   Future<Vendedor> getConsecutivo(int idVendedor) async {
     try {
-      Response response = await Dio()
-        .get('http://vps.easesoft.com.co:8080/BackRutaVenta-0.0.1-SNAPSHOT/tbasicas/vervendedor',
-        queryParameters: {
-          'idvendedor': idVendedor
-        });
+      final Response response = await _dio.get(
+        '/tbasicas/vervendedor',
+        queryParameters: {'idvendedor': idVendedor},
+      );
 
       if (response.statusCode == 200) {
-      
-        final vendedor = Vendedor.fromJson(response.data);
-        return vendedor;
-
+        return Vendedor.fromJson(response.data);
       } else {
-        throw Exception('Failed to load data');
+        throw Exception('Error al cargar vendedor (${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Failed to fetch data: $e');
+      throw Exception('No se pudo obtener el consecutivo del vendedor: $e');
     }
   }
 }

@@ -63,7 +63,10 @@ class VentaCompleta {
         nombreproducto: nombresProductos![d.productoId], 
         promocion: promocionesPorId?[d.promocionId],
       )).toList(),
-      'detallepagoventa': pagos.map((p) => p.toBackendJson(nombreformapago: nombresFormasPago![p.formaPagoId], fechapagoventa: '2026-08-19')).toList(),
+      'detallepagoventa': pagos.map((p) => p.toBackendJson(
+        nombreformapago: nombresFormasPago?[p.formaPagoId],
+        fechapagoventa: DateTime.now().toIso8601String().split('T')[0],
+      )).toList(),
     };
   }
 }

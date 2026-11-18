@@ -1,29 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:kolzumo_app/config/app_theme.dart';
 import 'package:kolzumo_app/controllers/thermal_printer_controller.dart';
+import 'package:kolzumo_app/core/services/telemetry_service.dart';
 import 'package:kolzumo_app/data/database/daos/ventas_dao.dart';
 import 'package:kolzumo_app/data/database/database.dart';
 import 'package:kolzumo_app/infrastructure/models/invoice.dart';
 import 'package:kolzumo_app/logic/auth_logic.dart';
-import 'package:kolzumo_app/presentation/screens/screen_customer.dart';
+import 'package:kolzumo_app/presentation/screens/screen_home.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/success_sale_dialog_widget.dart';
+import 'package:kolzumo_app/presentation/utils/items_ui/ticket_preview_dialog.dart';
 import 'package:kolzumo_app/providers/cart_provider.dart';
 import 'package:kolzumo_app/providers/checkout_provider.dart';
 import 'package:kolzumo_app/providers/inventario_provider.dart';
 import 'package:kolzumo_app/providers/precio_provider.dart';
+import 'package:kolzumo_app/services/storage_service.dart';
 import 'package:kolzumo_app/services/vendedor_service.dart';
 import 'package:provider/provider.dart';
 
 import '../../../infrastructure/formatters/currency_formatter.dart';
 
-class CheckoutSummary extends StatelessWidget {
-
+class CheckoutSummary extends StatefulWidget {
   const CheckoutSummary({
-
     super.key,
     required this.subtotal,
     required this.descuento,
     required this.iva,
-
   });
 
   final double subtotal;
@@ -31,42 +32,226 @@ class CheckoutSummary extends StatelessWidget {
   final double iva;
 
   @override
-  Widget build(BuildContext context) {
+  State<CheckoutSummary> createState() => _CheckoutSummaryState();
+}
 
-    // * Providers
+class _CheckoutSummaryState extends State<CheckoutSummary> {
+  bool _isConfirming = false;
+
+  Future<void> _confirmSale() async {
     final database = context.read<AppDatabase>();
+    final checkout = context.read<CheckoutProvider>();
+    final cart = context.read<CartProvider>();
+    final printer = context.read<ThermalPrinterController>();
+    final user = context.read<Auth>().userAccount;
+    final inventario = context.read<InventarioProvider>();
+    final precio = context.read<PreciosProvider>();
+
+    if (!printer.canOperate) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppTheme.dangerColor,
+          content: const Text(
+            'Debe conectar una impresora Bluetooth o activar Modo Impresora Virtual antes de registrar la venta.',
+          ),
+          action: SnackBarAction(
+            label: 'Configurar',
+            textColor: Colors.white,
+            onPressed: () => Navigator.of(context).pushNamed('/printers'),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (!checkout.puedeFinalizar) {
+      showDialog(
+        context: context,
+        builder: (_) => VentaFinalizadaDialog(
+          exitosa: false,
+          motivo: checkout.motivoNoVenta,
+          totalVenta: 0,
+          totalPagado: 0,
+          saldoPendiente: 0,
+          cantidadProductos: 0,
+          pagos: const [],
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isConfirming = true);
+
+    try {
+      final total = widget.subtotal - widget.descuento;
+      final totalPagado = checkout.totalPagado;
+      final saldoPendiente = checkout.saldoPendiente;
+      final items = cart.items.entries.toList();
+      final cantidadItems = items.fold<int>(0, (s, e) => s + e.value);
+
+      final storage = StorageService();
+      final vendedorService = VendedorService();
+
+      // 1. Obtiene el consecutivo y el prefijo real del vendedor (Cero Hardcoding)
+      final consecutivoDB = await database.ventasDao.getConsecutivoDB();
+      var format = await storage.getConsecutivoFormat(user!.idvendedor);
+      int consecutivo = 1;
+
+      if (consecutivoDB != null) {
+        consecutivo = consecutivoDB + 1;
+      } else {
+        try {
+          final consecutivoServ =
+              await vendedorService.getConsecutivo(user.idvendedor);
+          final parsed = consecutivoServ.parseConsecutivo();
+          consecutivo = parsed.number;
+          format = (prefix: parsed.prefix, padWidth: parsed.padWidth);
+          await storage.saveConsecutivoFormat(
+            idVendedor: user.idvendedor,
+            prefix: parsed.prefix,
+            padWidth: parsed.padWidth,
+          );
+        } catch (_) {
+          consecutivo = 1;
+        }
+      }
+
+      final String consecutivoStr =
+          '${format.prefix}${consecutivo.toString().padLeft(format.padWidth, '0')}';
+
+      final List<InvoiceItem> invoiceItems = items.map((entry) {
+        final producto = inventario.getById(entry.key);
+        final precioItem = precio.getByIds(
+              entry.key,
+              checkout.cliente!.idcategoriaCliente,
+            ) ??
+            producto?.precio;
+
+        return InvoiceItem(
+          productName: producto?.nombreproducto ?? 'Producto #${entry.key}',
+          unitPrice: precioItem?.valor ?? 0,
+          quantity: entry.value,
+        );
+      }).toList();
+
+      final invoiceVenta = Invoice(
+        date: DateTime.now(),
+        storeName: checkout.cliente!.nombreestablecimiento,
+        customerName: checkout.cliente!.administrador,
+        customerTaxId: checkout.cliente!.documento,
+        customerAddress: checkout.cliente!.direccion,
+        sellerName: user.nombre,
+        items: invoiceItems,
+        summary: InvoiceSummary(
+          subtotal: widget.subtotal,
+          discount: widget.descuento,
+          tax: widget.iva,
+          totalPaid: totalPagado,
+        ),
+        payments: checkout.pagos,
+        debtToDate: saldoPendiente > 0 ? saldoPendiente : 0,
+      );
+
+      // 2. Imprime el recibo en la impresora Bluetooth y genera la tirilla digital
+      final ticketText =
+          await printer.printInvoice(invoiceVenta, consecutivoStr);
+
+      // 3. Registra la venta en SQLite local (Drift)
+      await database.ventasDao.registrarVenta(
+        clienteId: checkout.cliente!.idcliente,
+        vendedorId: user.idvendedor,
+        consecutivo: consecutivo,
+        rutaId: checkout.cliente!.idruta,
+        lineas: items.map((e) {
+          final producto = inventario.getById(e.key);
+          final precioItem = precio.getByIds(
+                e.key,
+                checkout.cliente!.idcategoriaCliente,
+              ) ??
+              producto?.precio;
+
+          return LineaVentaInput(
+            productoId: e.key,
+            cantidad: e.value,
+            precioUnitario: precioItem?.valor ?? 0,
+            porcentajeIva: producto?.porcentajeiva ?? 0,
+          );
+        }).toList(),
+        pagos: checkout.pagos.map((e) {
+          return PagoVentaInput(
+            formaPagoId: e.metodoPago.idformapago,
+            monto: e.valor,
+          );
+        }).toList(),
+      );
+
+      // 4. Descuenta las existencias en SQLite local
+      await database.catalogosDao.descontarCantidadesVendidas(items);
+
+      await TelemetryService.instance.logEvent('sale_completed', {
+        'consecutivo': consecutivoStr,
+        'total_venta': total,
+        'total_pagado': totalPagado,
+        'saldo_credito': saldoPendiente > 0 ? saldoPendiente : 0,
+      });
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => VentaFinalizadaDialog(
+          exitosa: true,
+          consecutivo: consecutivoStr,
+          totalVenta: total,
+          totalPagado: totalPagado,
+          saldoPendiente: saldoPendiente > 0 ? saldoPendiente : 0,
+          cantidadProductos: cantidadItems,
+          pagos: checkout.pagos,
+          onVerTirilla: () {
+            showTicketPreviewDialog(
+              context,
+              ticketText: ticketText,
+              title: 'Recibo Pedido #$consecutivoStr',
+              onReprint: () =>
+                  printer.printInvoice(invoiceVenta, consecutivoStr),
+            );
+          },
+          onImprimir: () => printer.printInvoice(invoiceVenta, consecutivoStr),
+          onNuevaVenta: () {
+            context.read<CheckoutProvider>().reset();
+            cart.clear();
+
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (_) => const HomeApp(initialTab: 1),
+              ),
+              (route) => false,
+            );
+          },
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isConfirming = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final checkout = context.watch<CheckoutProvider>();
-    final cart = context.watch<CartProvider>();
-    final printer = context.watch<ThermalPrinterController>();
-    final user = context.watch<Auth>().userAccount;
-    final inventario = context.watch<InventarioProvider>();
-    final precio = context.watch<PreciosProvider>();
-
-    // * Service
-    VendedorService vendedorService = VendedorService();
-
-    // * Variables 
-    final total = subtotal - descuento;
+    final total = widget.subtotal - widget.descuento;
     final totalPagado = checkout.totalPagado;
     final saldoPendiente = checkout.saldoPendiente;
     final cambio = checkout.cambio;
 
-    final items = cart.items.entries.toList();
-    final cantidadItems = items.length;
-
     checkout.total = total;
 
-    int consecutivo = 0;
-    
-
     return Material(
-
       elevation: 12,
-
       child: SafeArea(
-
+        top: false,
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: const BorderRadius.vertical(
@@ -82,244 +267,112 @@ class CheckoutSummary extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .outlineVariant,
-                  borderRadius: BorderRadius.circular(20),
+              _row('Subtotal', CurrencyFormatter.toCOP(widget.subtotal)),
+              if (widget.descuento > 0) ...[
+                const SizedBox(height: 4),
+                _row(
+                  'Descuentos',
+                  '- ${CurrencyFormatter.toCOP(widget.descuento)}',
+                  color: AppTheme.primaryColor,
                 ),
-              ),
-
+              ],
+              if (widget.iva > 0) ...[
+                const SizedBox(height: 4),
+                _row('IVA', CurrencyFormatter.toCOP(widget.iva)),
+              ],
+              const Divider(height: 18),
               _row(
-                "Subtotal",
-                CurrencyFormatter.toCOP(subtotal),
-              ),
-
-              const SizedBox(height:8),
-
-              
-              _row(
-                "Descuentos",
-                descuento != 0 ? "- ${CurrencyFormatter.toCOP(descuento)}" : CurrencyFormatter.toCOP(descuento),
-                color: descuento != 0 ? Colors.green : null,
-              ),
-
-              const SizedBox(height:8),
-
-              _row(
-                "IVA",
-                CurrencyFormatter.toCOP(iva),
-              ),
-
-              const Divider(height:30),
-
-              _row(
-                "TOTAL",
+                'TOTAL A PAGAR',
                 CurrencyFormatter.toCOP(total),
                 bold: true,
               ),
-
-              if(totalPagado > 0) ...[
-
+              const SizedBox(height: 6),
+              _row(
+                'Medios de pago hoy',
+                CurrencyFormatter.toCOP(totalPagado),
+                color: AppTheme.primaryColor,
+              ),
+              const SizedBox(height: 4),
+              saldoPendiente < 0
+                  ? _row(
+                      'Cambio a devolver',
+                      CurrencyFormatter.toCOP(cambio),
+                      color: AppTheme.infoBlue,
+                      bold: true,
+                    )
+                  : _row(
+                      checkout.clienteTieneCredito
+                          ? 'Saldo a crédito'
+                          : 'Faltante por pagar',
+                      CurrencyFormatter.toCOP(saldoPendiente),
+                      color: saldoPendiente > 0
+                          ? (checkout.clienteTieneCredito
+                              ? AppTheme.orangeBadge
+                              : AppTheme.dangerColor)
+                          : AppTheme.primaryColor,
+                    ),
+              if (checkout.clienteTieneCredito &&
+                  checkout.cliente?.cupo != null) ...[
+                const SizedBox(height: 4),
                 _row(
-                  "Total Pagado",
-                  CurrencyFormatter.toCOP(totalPagado),
-                ),
-
-                saldoPendiente < 0
-                ? _row(
-                    "Cambio",
-                    CurrencyFormatter.toCOP(cambio),
-                  )
-                : _row(
-                    "Saldo Pendiente",
-                    CurrencyFormatter.toCOP(saldoPendiente),
-                  ),
-              ],
-
-              if(checkout.cliente!.credito == 'Si')
-                _row(
-                  "Cupo Disponible",
+                  'Cupo disponible',
                   CurrencyFormatter.toCOP(checkout.cliente!.cupo.toString()),
                 ),
-              
-              const SizedBox(height:20),
-
+              ],
+              const SizedBox(height: 14),
               SizedBox(
-
                 width: double.infinity,
-
                 height: 50,
-
                 child: FilledButton.icon(
-
-                  icon: const Icon(Icons.payment),
-
-                  label: const Text("Confirmar venta",),
-
-                  onPressed: () async {
-                    if (checkout.puedeFinalizar) {
-
-                      // * Obtiene consecutivo
-                      final consecutivoDB = await database.ventasDao.getConsecutivoDB();
-                      
-                      if (consecutivoDB != null) {
-                        consecutivo = consecutivoDB + 1;
-                      } else {
-                        final consecutivoServ = await vendedorService.getConsecutivo(user!.idvendedor);
-                        consecutivo = int.parse(consecutivoServ.consecutivoremision.substring(3));
-                      }
-
-                      // * Creación consecutivo
-                      final consecutivoStr = 'VPP-${consecutivo.toString().padLeft(4, '0')}';
-
-                      final List<InvoiceItem> invoiceItems = items.map((entry) {
-                        final producto = inventario.getById(entry.key);
-                        final precioItem = precio.getByIds(entry.key, checkout.cliente!.idcategoriaCliente);
-
-                        return InvoiceItem(
-                          productName: producto!.nombreproducto,
-                          unitPrice: precioItem!.valor,
-                          quantity: entry.value, 
-                        );
-                      }).toList();
-
-                      final invoiceVenta = Invoice(
-                        date: DateTime.now(), 
-                        storeName: checkout.cliente!.nombreestablecimiento, 
-                        customerName: checkout.cliente!.administrador, 
-                        customerTaxId: checkout.cliente!.documento, 
-                        customerAddress: checkout.cliente!.direccion, 
-                        sellerName: user!.nombre, 
-                        items: invoiceItems, 
-                        summary: InvoiceSummary(subtotal: total, totalPaid: totalPagado),
-                        payments: checkout.pagos
-                      );
-
-                      // * Print
-                      //await printer.printInvoice(invoiceVenta, consecutivoStr);
-                      
-                      //* Registrar venta 
-                      database.ventasDao.registrarVenta(
-                        clienteId: checkout.cliente!.idcliente, 
-                        vendedorId: user.idvendedor, 
-                        consecutivo: consecutivo,
-                        rutaId: checkout.cliente!.idruta,
-                        lineas: items.map((e) {
-                          final producto = inventario.getById(e.key);
-
-                          return LineaVentaInput(
-                            productoId: e.key, 
-                            cantidad: e.value, 
-                            precioUnitario: producto!.precio!.valor, 
-                            porcentajeIva: producto.porcentajeiva
-                          );
-                        }).toList(),
-                        pagos: checkout.pagos.map((e) {
-
-                          return PagoVentaInput(
-                            formaPagoId: e.metodoPago.idformapago, 
-                            monto: e.valor
-                          );
-                        }).toList(),
-                      );
-
-                      // * Actualización tabla BD
-                      await database.catalogosDao.descontarCantidadesVendidas(items);
-
-                      if(!context.mounted) return;
-
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => VentaFinalizadaDialog(
-                          exitosa: true,
-                          consecutivo: consecutivoStr,
-                          totalVenta: checkout.total,
-                          totalPagado: checkout.totalPagado,
-                          saldoPendiente: checkout.saldoPendiente,
-                          cantidadProductos: cantidadItems,
-                          pagos: checkout.pagos,
-
-                          onNuevaVenta: () {
-
-                            // * Vacia metodo pado, tipo pago, pagos y carrito
-                            context.read<CheckoutProvider>().reset();
-                            cart.clear();
-
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CustomersScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }else{
-                      showDialog(
-                        context: context,
-                        builder: (_) => VentaFinalizadaDialog(
-                          exitosa: false,
-                          motivo: checkout.motivoNoVenta,
-                          totalVenta: 0,
-                          totalPagado: 0,
-                          saldoPendiente: 0,
-                          cantidadProductos: 0,
-                          pagos: [],
-                        ),
-                      );
-                    }
-                  },
+                  icon: _isConfirming
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.print_rounded),
+                  label: Text(
+                    _isConfirming
+                        ? 'Registrando e imprimiendo...'
+                        : 'Registrar Venta e Imprimir',
+                  ),
+                  onPressed: _isConfirming ? null : _confirmSale,
                 ),
-              )
-            ]
-          )
-        )
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _row(
     String title,
-    String value,{
-    bool bold=false,
+    String value, {
+    bool bold = false,
     Color? color,
-  }){
-
+  }) {
     return Row(
-
-      mainAxisAlignment:
-          MainAxisAlignment.spaceBetween,
-
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-
         Text(
           title,
           style: TextStyle(
-            fontWeight: bold
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+            fontSize: bold ? 15 : 13.5,
+            fontWeight: bold ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-
         Text(
           value,
           style: TextStyle(
             color: color,
-            fontWeight: bold
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-            fontSize: bold
-                    ? 20
-                    : 16,
+            fontWeight: bold ? FontWeight.bold : FontWeight.w600,
+            fontSize: bold ? 18 : 14.5,
           ),
-        )
-
+        ),
       ],
     );
   }

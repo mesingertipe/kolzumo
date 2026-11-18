@@ -1,24 +1,21 @@
 import 'package:dio/dio.dart';
-
+import 'package:kolzumo_app/core/network/api_client.dart';
 import '../infrastructure/models/precios_model.dart';
 
-
 class PreciosService {
+  final Dio _dio = ApiClient.instance.dio;
 
   Future<List<Precios>> getPrecios() async {
     try {
-      Response response = await Dio().get('http://vps.easesoft.com.co:8080/BackRutaVenta-0.0.1-SNAPSHOT/tbasicas/verprecios');
+      final Response response = await _dio.get('/tbasicas/verprecios');
 
       if (response.statusCode == 200) {
-      
-        final precios = Precios.listFromJson(response.data);
-        return precios;
-
+        return Precios.listFromJson(response.data);
       } else {
-        throw Exception('Failed to load data');
+        throw Exception('Error al cargar precios (${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Failed to fetch data: $e');
+      throw Exception('No se pudieron obtener los precios: $e');
     }
   }
 }

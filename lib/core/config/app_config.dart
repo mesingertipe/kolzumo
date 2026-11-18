@@ -120,3 +120,4 @@ class AppConfig extends ChangeNotifier {
     notifyListeners();
   }
 }
+

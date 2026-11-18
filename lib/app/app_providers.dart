@@ -1,4 +1,7 @@
 import 'package:kolzumo_app/controllers/day_closing_controller.dart';
+import 'package:kolzumo_app/core/config/app_config.dart';
+import 'package:kolzumo_app/core/services/biometric_service.dart';
+import 'package:kolzumo_app/core/services/telemetry_service.dart';
 import 'package:kolzumo_app/data/repositories/resumen_dia_repo.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -22,18 +25,21 @@ List<SingleChildWidget> buildAppProviders({
   required PreciosRepository preciosRepository,
   required ResumenDiaRepository resumenDiaRepository,
   required UserAuth? initialUser,
+  required BiometricService biometricService,
 }) {
   return [
-    
+    ChangeNotifierProvider<AppConfig>.value(value: AppConfig.instance),
+    ChangeNotifierProvider<TelemetryService>.value(
+      value: TelemetryService.instance,
+    ),
+    ChangeNotifierProvider<BiometricService>.value(value: biometricService),
     Provider<AppDatabase>.value(value: database),
     Provider<PreciosRepository>.value(value: preciosRepository),
-    Provider<ResumenDiaRepository>.value(value: resumenDiaRepository,),
+    Provider<ResumenDiaRepository>.value(value: resumenDiaRepository),
     Provider<SessionSyncService>(
       create: (_) => SessionSyncService(database, preciosRepository),
     ),
-
     ChangeNotifierProvider(create: (_) => Auth(userAccount: initialUser)),
-
     ChangeNotifierProvider(create: (_) => RutaProvider()),
     ChangeNotifierProvider(create: (_) => CartProvider()),
     ChangeNotifierProvider(create: (_) => InventarioProvider()),
@@ -43,7 +49,6 @@ List<SingleChildWidget> buildAppProviders({
     ChangeNotifierProvider(create: (_) => VehiculoProvider()),
     ChangeNotifierProvider(create: (_) => ThermalPrinterController()..init()),
     ChangeNotifierProvider(create: (_) => DayClosingController()),
-    
     ChangeNotifierProxyProvider<ClienteProvider, CheckoutProvider>(
       create: (_) => CheckoutProvider(),
       update: (_, clienteProvider, checkout) {

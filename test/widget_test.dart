@@ -1,30 +1,31 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter_test/flutter_test.dart';
-import 'package:material_ui/material_ui.dart';
-
-import 'package:kolzumo_app/main.dart';
+import 'package:kolzumo_app/core/config/app_config.dart';
+import 'package:kolzumo_app/infrastructure/models/invoice.dart';
+import 'package:kolzumo_app/infrastructure/models/vendedor_model.dart';
+import 'package:kolzumo_app/infrastructure/service_permissions/invoice_ticket_builder.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('Vendedor.parseConsecutivo extracts dynamic prefix and number', () {
+    final vendedor = Vendedor(
+      idvendedor: 1,
+      nombre: 'Pepito Perez',
+      consecutivoremision: 'PPP30002',
+      idusuario: 10,
+      nombreusuario: 'pepito',
+      fechaultimaventa: null,
+      mensaje: null,
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    final parsed = vendedor.parseConsecutivo();
+    expect(parsed.prefix, 'PPP');
+    expect(parsed.number, 30002);
+    expect(parsed.padWidth, 5);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('InvoiceTicketBuilder formats plain text receipt with AppConfig brand', () {
+    final sample = Invoice.sample(sellerName: 'Pepito Perez');
+    final text = InvoiceTicketBuilder().formatInvoicePlainText(sample, 'PPP30002');
+    expect(text.contains('PPP30002'), isTrue);
+    expect(text.contains(AppConfig.instance.brandName.toUpperCase()), isTrue);
   });
 }

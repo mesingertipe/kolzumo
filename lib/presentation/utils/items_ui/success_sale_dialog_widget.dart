@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kolzumo_app/config/app_theme.dart';
 import 'package:kolzumo_app/infrastructure/models/motivo_noventamodel.dart';
 
 import '../../../infrastructure/formatters/currency_formatter.dart';
@@ -17,6 +18,7 @@ class VentaFinalizadaDialog extends StatelessWidget {
 
   final VoidCallback? onNuevaVenta;
   final VoidCallback? onImprimir;
+  final VoidCallback? onVerTirilla;
 
   const VentaFinalizadaDialog({
     super.key,
@@ -30,244 +32,231 @@ class VentaFinalizadaDialog extends StatelessWidget {
     required this.pagos,
     this.onNuevaVenta,
     this.onImprimir,
+    this.onVerTirilla,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    final Color estadoColor = exitosa ? Colors.green : Colors.red;
-
-    final IconData estadoIcono = exitosa
-      ? Icons.task_alt_rounded
-      : Icons.cancel_rounded;
+    final Color estadoColor =
+        exitosa ? AppTheme.primaryColor : AppTheme.dangerColor;
+    final IconData estadoIcono =
+        exitosa ? Icons.task_alt_rounded : Icons.cancel_rounded;
 
     final String titulo = exitosa
-      ? '¡Venta realizada!'
-      : 'No fue posible finalizar la venta';
+        ? '¡Venta registrada con éxito!'
+        : 'Total a pagar y Medios de pago no coinciden';
 
     final String descripcion = exitosa
-      ? 'La venta fue registrada exitosamente.'
-      : (motivo?.titulo ?? 'Ocurrió un problema al finalizar la venta.');
+        ? 'El comprobante ha sido generado e impreso.'
+        : (motivo?.titulo ?? 'Verifica los medios de pago antes de registrar.');
 
     return Dialog(
       elevation: 0,
       backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 430),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(24),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-
-            /// Icono principal
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: estadoColor.withValues(alpha: .12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                estadoIcono,
-                size: 60,
-                color: estadoColor,
-              ),
-            ),
-
-            const SizedBox(height: 18),
-
-            if(exitosa)...[
-              Text(
-                consecutivo!,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-
-            Text(
-              titulo,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            if(!exitosa)
-              Text(
-                descripcion,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium,
-              ),
-
-            if(exitosa) ...[
-
-              Text(
-                descripcion,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-
-              const SizedBox(height: 24),
-            ],
-
-            // Motivo no venta
-            if (!exitosa && motivo != null) ...[
-
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
+                width: 72,
+                height: 72,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(14),
+                  color: estadoColor.withValues(alpha: .12),
+                  shape: BoxShape.circle,
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    Icon(
-                      Icons.info_outline,
-                      color: theme.colorScheme.onErrorContainer,
+                child: Icon(
+                  estadoIcono,
+                  size: 46,
+                  color: estadoColor,
+                ),
+              ),
+              const SizedBox(height: 14),
+              if (exitosa && consecutivo != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.secondColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Pedido # $consecutivo',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.forestDark,
+                      fontSize: 15,
                     ),
-
-                    const SizedBox(width: 10),
-
-                    Expanded(
-                      child: Text(
-                        motivo!.detalle,
-                        style: TextStyle(
-                          color: theme.colorScheme.onErrorContainer,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              Text(
+                titulo,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.forestDark,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                descripcion,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(height: 18),
+              if (!exitosa && motivo != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          motivo!.detalle,
+                          style: TextStyle(
+                            color: theme.colorScheme.onErrorContainer,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-
-            /// Resumen
-            if(exitosa) ...[
-
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Column(
-                  children: [
-
-                    _row(
-                      context,
-                      Icons.receipt_long,
-                      "Total venta",
-                      CurrencyFormatter.toCOP(totalVenta),
-                    ),
-
-                    const Divider(),
-
-                    _row(
-                      context,
-                      Icons.payments,
-                      "Total pagado",
-                      CurrencyFormatter.toCOP(totalPagado),
-                    ),
-
-                    if (saldoPendiente > 0) ...[
+                const SizedBox(height: 18),
+              ],
+              if (exitosa) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceBg,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      _row(
+                        context,
+                        Icons.receipt_long,
+                        'Total venta',
+                        CurrencyFormatter.toCOP(totalVenta),
+                      ),
                       const Divider(),
                       _row(
                         context,
-                        Icons.account_balance_wallet,
-                        "Saldo pendiente",
-                        CurrencyFormatter.toCOP(saldoPendiente),
-                        valueColor: Colors.orange,
+                        Icons.payments,
+                        'Pagado hoy',
+                        CurrencyFormatter.toCOP(totalPagado),
+                      ),
+                      if (saldoPendiente > 0) ...[
+                        const Divider(),
+                        _row(
+                          context,
+                          Icons.account_balance_wallet,
+                          'Saldo a crédito',
+                          CurrencyFormatter.toCOP(saldoPendiente),
+                          valueColor: AppTheme.orangeBadge,
+                        ),
+                      ],
+                      const Divider(),
+                      _row(
+                        context,
+                        Icons.shopping_cart_checkout,
+                        'Total unidades',
+                        '$cantidadProductos',
                       ),
                     ],
-
-                    const Divider(),
-
-                    _row(
-                      context,
-                      Icons.shopping_cart_checkout,
-                      "Productos",
-                      "$cantidadProductos",
-                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                if (pagos.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: pagos.map((pago) {
+                      return Chip(
+                        avatar: Icon(
+                          pago.metodoPago.icono,
+                          size: 16,
+                          color: AppTheme.primaryColor,
+                        ),
+                        label: Text(
+                          '${pago.metodoPago.nombreformapago}: ${CurrencyFormatter.toCOP(pago.valor)}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                Row(
+                  children: [
+                    if (onVerTirilla != null)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: onVerTirilla,
+                          icon: const Icon(Icons.receipt_outlined, size: 18),
+                          label: const Text('Ver Tirilla'),
+                        ),
+                      ),
+                    if (onVerTirilla != null && onImprimir != null)
+                      const SizedBox(width: 8),
+                    if (onImprimir != null)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: onImprimir,
+                          icon: const Icon(Icons.print_outlined, size: 18),
+                          label: const Text('Reimprimir'),
+                        ),
+                      ),
                   ],
                 ),
-              ),
-
-              const SizedBox(height: 20),
-
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Métodos de pago",
-                  style: theme.textTheme.titleMedium,
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: pagos.map((pago) {
-                  return Chip(
-                    avatar: Icon(
-                      pago.metodoPago.icono,
-                      size: 18,
-                    ),
-                    label: Text(
-                      pago.metodoPago.nombreformapago,
-                    ),
-                  );
-                }).toList(),
-              ),
-
-              const SizedBox(height: 28),
-            ],
-
-            // Botones
-            if(exitosa)
-              Row(
-                children: [
-                  
-                  Expanded(
-                    child: FilledButton.icon(
-                      icon: const Icon(Icons.add_shopping_cart),
-                      label: const Text("Nueva"),
-                      onPressed: () {
-                        // TODO: Nueva venta
-                        Navigator.pop(context);
-
-                        onNuevaVenta?.call();
-                      },
-                    ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('Continuar en Ruta'),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onNuevaVenta?.call();
+                    },
                   ),
-                ],
-              )
-              else
+                ),
+              ] else
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
                     icon: const Icon(Icons.arrow_back),
-                    label: const Text("Volver"),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    label: const Text('Corregir Medios de Pago'),
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -283,22 +272,18 @@ class VentaFinalizadaDialog extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-
           Icon(
             icon,
-            size: 20,
+            size: 19,
             color: theme.colorScheme.primary,
           ),
-
           const SizedBox(width: 10),
-
           Expanded(
-            child: Text(label),
+            child: Text(label, style: const TextStyle(fontSize: 13.5)),
           ),
-
           Text(
             value,
             style: theme.textTheme.titleSmall?.copyWith(

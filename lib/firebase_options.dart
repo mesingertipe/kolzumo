@@ -40,3 +40,4 @@ class DefaultFirebaseOptions {
     iosBundleId: 'co.com.kolzumo.app',
   );
 }
+

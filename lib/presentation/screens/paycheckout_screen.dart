@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kolzumo_app/data/database/database.dart';
 import 'package:kolzumo_app/infrastructure/models/metodopago_model.dart';
 import 'package:kolzumo_app/providers/cart_provider.dart';
 import 'package:kolzumo_app/providers/cliente_provider.dart';
@@ -42,15 +43,42 @@ class _CheckoutWidgetState extends State<CheckoutScreen> {
     super.dispose();
   }
 
+  /// Carga los métodos de pago desde SQLite local primero (100% Offline-First)
+  /// y solo recurre al servicio HTTP si la tabla local está vacía.
   Future<void> _loadMetodosPago() async {
     final metodospagoProvider = context.read<CheckoutProvider>();
+    final database = context.read<AppDatabase>();
 
-    final metodosPago = await _metodosPagoService.getMetodosPago();
+    List<MetodoPago> metodosPago = [];
+    try {
+      final rows = await database.catalogosDao.obtenerFormasPago();
+      metodosPago = rows
+          .map(
+            (r) => MetodoPago(
+              idformapago: r.idformapago,
+              nombreformapago: r.nombreformapago,
+              mensaje: null,
+            ),
+          )
+          .toList();
+    } catch (_) {}
+
+    if (metodosPago.isEmpty) {
+      try {
+        metodosPago = await _metodosPagoService.getMetodosPago();
+        await database.catalogosDao.insertFormasPago(metodosPago);
+      } catch (e) {
+        debugPrint('Error cargando formas de pago: $e');
+      }
+    }
+
     metodospagoProvider.loadMetodosPago(metodosPago);
 
-    setState(() {
-      metodos = metodosPago;
-    });
+    if (mounted) {
+      setState(() {
+        metodos = metodosPago;
+      });
+    }
   }
 
   void _irASiguiente() {
@@ -79,7 +107,6 @@ class _CheckoutWidgetState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Providers
     final inventario = context.watch<InventarioProvider>();
     final precio = context.watch<PreciosProvider>();
     final cliente = context.watch<ClienteProvider>();
@@ -102,7 +129,6 @@ class _CheckoutWidgetState extends State<CheckoutScreen> {
               ? 'Carrito: ${customerSel.nombreestablecimiento}'
               : 'Pago: ${customerSel.nombreestablecimiento}',
         ),
-        centerTitle: true,
         leading: _currentPage == 0
             ? null
             : IconButton(
@@ -111,9 +137,10 @@ class _CheckoutWidgetState extends State<CheckoutScreen> {
               ),
         actions: [
           IconButton(
-            color: Theme.of(context).colorScheme.error,
+            tooltip: 'Vaciar carrito',
+            color: Colors.white,
             onPressed: () => _vaciarCarritoYSalir(cart, checkout),
-            icon: const Icon(Icons.remove_shopping_cart),
+            icon: const Icon(Icons.remove_shopping_cart_outlined),
           ),
         ],
       ),
@@ -123,7 +150,6 @@ class _CheckoutWidgetState extends State<CheckoutScreen> {
             totalPages: _totalPages,
             currentPage: _currentPage,
           ),
-
           Expanded(
             child: PageView(
               controller: _pageController,
@@ -146,28 +172,25 @@ class _CheckoutWidgetState extends State<CheckoutScreen> {
               ],
             ),
           ),
-
-          if(_currentPage != 0)
+          if (_currentPage != 0)
             CheckoutSummary(
               subtotal: resumen.total,
               descuento: resumen.tieneDescuento ? resumen.descuento : 0,
               iva: resumen.discriminaIVA ? resumen.valorIVA : 0,
             ),
-
           if (_currentPage == 0)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _irASiguiente,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton.icon(
+                    onPressed: _irASiguiente,
+                    icon: const Icon(Icons.payments_outlined),
+                    label: const Text('Continuar al pago'),
                   ),
-                  child: const Text('Continuar al pago'),
                 ),
               ),
             ),

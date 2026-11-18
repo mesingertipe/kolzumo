@@ -142,3 +142,4 @@ class BiometricService extends ChangeNotifier {
     return (username: user, password: pass);
   }
 }
+

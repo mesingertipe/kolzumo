@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../infrastructure/models/userauth.dart';
@@ -8,6 +8,8 @@ import '../infrastructure/models/userauth.dart';
 class StorageService {
   static const String _sessionKey = 'user_session';
   static const String _inventarioKey = 'inventario_sincronizado';
+  static const String _consecutivoPrefixKey = 'consecutivo_prefix_vendedor_';
+  static const String _consecutivoPadKey = 'consecutivo_pad_vendedor_';
 
   /// Recupera la sesión del disco de forma segura y devuelve el objeto listo o null.
   Future<UserAuth?> getSavedSession() async {
@@ -38,21 +40,48 @@ class StorageService {
     await prefs.remove(_sessionKey);
   }
 
-  // * Inventario
+  // * Inventario y Sincronización por Vendedor
 
   Future<bool> yaSincronizado(int idVendedor) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_inventarioKey) ?? false;
+    return prefs.getBool('${_inventarioKey}_$idVendedor') ??
+        prefs.getBool(_inventarioKey) ??
+        false;
   }
 
   Future<void> marcarSincronizado(int idVendedor) async {
     final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('${_inventarioKey}_$idVendedor', true);
     await prefs.setBool(_inventarioKey, true);
   }
 
-  /// Útil para forzar resync manual o al cerrar sesión
-  Future<void> resetear() async {
+  /// Útil para forzar resync manual o al cerrar el día / sesión
+  Future<void> resetear([int? idVendedor]) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_inventarioKey);
+    if (idVendedor != null) {
+      await prefs.remove('${_inventarioKey}_$idVendedor');
+    }
+  }
+
+  // * Prefijo dinámico del consecutivo del vendedor (Cero Hardcoding)
+
+  Future<void> saveConsecutivoFormat({
+    required int idVendedor,
+    required String prefix,
+    required int padWidth,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('$_consecutivoPrefixKey$idVendedor', prefix);
+    await prefs.setInt('$_consecutivoPadKey$idVendedor', padWidth);
+  }
+
+  Future<({String prefix, int padWidth})> getConsecutivoFormat(
+    int idVendedor,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final prefix = prefs.getString('$_consecutivoPrefixKey$idVendedor') ?? '';
+    final padWidth = prefs.getInt('$_consecutivoPadKey$idVendedor') ?? 4;
+    return (prefix: prefix, padWidth: padWidth);
   }
 }

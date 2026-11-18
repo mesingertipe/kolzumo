@@ -5,144 +5,188 @@ import 'package:kolzumo_app/infrastructure/models/inventario_model.dart';
 import '../../../infrastructure/models/pedido_pendiente_model.dart';
 import 'modal_inventario.dart';
 
-class OrderItem {
-  final String id;
-  final String title;
-  final String description;
-  final IconData icon;
-  final DateTime date;
-
-  OrderItem({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.date,
-  });
-}
-
-/// A reusable widget that shows a list of orders as cards with icons, shadow and
-/// a small description. Use ListOrders() in your UI.
 class ListOrders extends StatelessWidget {
   final List<PedidosPendientes> orders;
+  final bool shrinkWrap;
+  final ScrollPhysics? physics;
 
-  const ListOrders({super.key, required this.orders});
+  const ListOrders({
+    super.key,
+    required this.orders,
+    this.shrinkWrap = false,
+    this.physics,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final items = orders.isNotEmpty ? orders : [];
-    final theme = Theme.of(context);
+    final items = orders;
 
     if (items.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.inbox, size: 100, color: theme.colorScheme.onSurfaceVariant),
-            const Text('No hay pedidos pendientes por aprobar'),
-          ],
-        )
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: const BoxDecoration(
+                  color: AppTheme.secondColor,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.task_alt_rounded,
+                  size: 44,
+                  color: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'No hay pedidos pendientes por aprobar',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.forestDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Tu inventario está al día. Puedes seleccionar o cambiar tu ruta y atender a tus clientes.',
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       );
     }
 
     return ListView.separated(
+      shrinkWrap: shrinkWrap,
+      physics: physics,
       padding: const EdgeInsets.all(12),
       itemCount: items.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        PedidosPendientes order = items[index];
+        final PedidosPendientes order = items[index];
+        final totalRefs = order.detallepedidovendedor.length;
+        final totalUnits = order.detallepedidovendedor.fold<int>(
+          0,
+          (sum, d) => sum + d.cantidad,
+        );
+
         return Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          shadowColor: Colors.black26,
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            leading: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppTheme.secondColor,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.secondColor,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (_) {
+                  final inventarios = order.detallepedidovendedor
+                      .map(Inventario.fromDetallePedido)
+                      .toList();
+                  return ModalInventario(
+                    inventarios: inventarios,
+                    origen: 'home',
+                    idPedido: order.idpedidovendedor,
+                  );
+                },
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AppTheme.secondColor,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.inventory_rounded,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Pedido #${order.idpedidovendedor}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15.5,
+                                  color: AppTheme.forestDark,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.orangeBadge
+                                    .withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                order.nombreestado,
+                                style: const TextStyle(
+                                  color: Color(0xFFB45309),
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Bodega ${order.idbodega} • $totalRefs productos ($totalUnits uds)',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 13,
+                              color: Colors.grey.shade500,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Fecha: ${_formatDate(order.fechapedido)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppTheme.primaryColor,
                   ),
                 ],
               ),
-              child: Icon(Icons.room_service, color: theme.colorScheme.primary),
             ),
-            title: Row(
-              children: [
-                Text('Pedido # ${index + 1}',
-                  style: const TextStyle(fontWeight: FontWeight.w600)
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.orangeBadge,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.pending_actions,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 5,),
-                      Text(
-                        order.nombreestado,
-                        style: TextStyle(
-                          color: theme.colorScheme.inverseSurface,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  )
-                )
-              ],
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(Icons.house_siding_sharp),
-                    Text('Bodega: ${order.idbodega.toString()}', 
-                      maxLines: 2, 
-                      overflow: TextOverflow.ellipsis
-                    ),
-                  ]
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(Icons.calendar_month_outlined),
-                    Text(
-                      'Fecha pedido: ${_formatDate(order.fechapedido)}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                )
-              ],
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-
-              // Mostrar modal
-              showDialog(context: context, builder: (_) {
-                final inventarios = order.detallepedidovendedor
-                  .map(Inventario.fromDetallePedido)
-                  .toList();
-                return ModalInventario(inventarios:inventarios, origen: 'home');
-              });
-            },
           ),
         );
       },

@@ -1,25 +1,21 @@
 import 'package:dio/dio.dart';
-
+import 'package:kolzumo_app/core/network/api_client.dart';
 import '../infrastructure/models/promocion_model.dart';
 
 class PromocionService {
+  final Dio _dio = ApiClient.instance.dio;
 
   Future<List<Promocion>> getPromociones() async {
     try {
-      Response response = await Dio()
-        .get('http://vps.easesoft.com.co:8080/BackRutaVenta-0.0.1-SNAPSHOT/tbasicas/verpromocioneshoy');
+      final Response response = await _dio.get('/tbasicas/verpromocioneshoy');
 
       if (response.statusCode == 200) {
-      
-        final promociones = Promocion.listFromJson(response.data);
-
-        return promociones;
-
+        return Promocion.listFromJson(response.data);
       } else {
-        throw Exception('Failed to load data');
+        throw Exception('Error al cargar promociones (${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Failed to fetch data: $e');
+      throw Exception('No se pudieron obtener las promociones: $e');
     }
   }
 }

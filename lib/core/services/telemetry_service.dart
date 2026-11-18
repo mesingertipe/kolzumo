@@ -236,3 +236,4 @@ class TelemetryService extends ChangeNotifier {
     } catch (_) {}
   }
 }
+
