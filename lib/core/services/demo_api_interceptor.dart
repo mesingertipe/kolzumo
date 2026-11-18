@@ -13,15 +13,17 @@ class DemoApiInterceptor extends Interceptor {
   static const String demoUsername = 'demo';
   static const String demoPassword = '1234';
 
-  bool isDemoMode = false;
+  bool _isDemoMode = false;
+  bool get isDemoMode => _isDemoMode;
+  set isDemoMode(bool val) => _isDemoMode = val;
   bool _demoOrderApproved = false;
 
   void activateDemoMode() {
-    isDemoMode = true;
+    _isDemoMode = true;
   }
 
   void deactivateDemoMode() {
-    isDemoMode = false;
+    _isDemoMode = false;
     _demoOrderApproved = false;
   }
 
@@ -38,7 +40,10 @@ class DemoApiInterceptor extends Interceptor {
           .toLowerCase();
 
       if (username == demoUsername) {
-        isDemoMode = true;
+        if (!isDemoMode) {
+          // Si el modo demo no está autorizado por configuración, deja pasar al backend real
+          return handler.next(options);
+        }
         return handler.resolve(
           Response(
             requestOptions: options,

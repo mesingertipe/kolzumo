@@ -109,6 +109,7 @@ class TelemetryService extends ChangeNotifier {
         'min_required_build_ios': 1,
         'latest_build_ios': AppConfig.instance.buildNumber,
         'force_update_message': AppConfig.instance.forceUpdateMessage,
+        'demo_mode_enabled': AppConfig.instance.demoModeEnabled,
         'store_url_android':
             'https://play.google.com/store/apps/details?id=co.com.kolzumo.app',
         'store_url_ios': 'https://apps.apple.com',
@@ -143,6 +144,7 @@ class TelemetryService extends ChangeNotifier {
       minRequiredBuild: minBuild,
       latestRecommendedBuild: latestBuild,
       forceUpdateMessage: rc.getString('force_update_message'),
+      demoModeEnabled: rc.getBool('demo_mode_enabled'),
       storeUrlAndroid: rc.getString('store_url_android'),
       storeUrlIos: rc.getString('store_url_ios'),
     );

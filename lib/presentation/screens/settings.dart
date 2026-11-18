@@ -253,6 +253,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const Divider(height: 1),
                   ListTile(
+                    leading: const Icon(Icons.bug_report_outlined, color: AppTheme.dangerColor),
+                    title: const Text('Prueba de Crashlytics'),
+                    subtitle: const Text('Genera un error simulado para activar el panel en Firebase'),
+                    trailing: TextButton(
+                      onPressed: () {
+                        TelemetryService.instance.recordError(
+                          Exception('Prueba de activación de Crashlytics desde KolZumo App'),
+                          StackTrace.current,
+                          reason: 'Prueba manual para encender el panel de Firebase',
+                          fatal: false,
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Evento de prueba enviado a Firebase Crashlytics con éxito.'),
+                            backgroundColor: AppTheme.primaryColor,
+                          ),
+                        );
+                      },
+                      child: const Text('Enviar Prueba'),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
                     leading: Icon(
                       telemetry.isInitialized
                           ? Icons.verified_rounded

@@ -317,67 +317,69 @@ class _FormValidationState extends State<FormValidation> {
             ),
           ),
           const SizedBox(height: 12),
-          // Botón de acceso rápido con Usuario Demo para pruebas de APK / Tiendas
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppTheme.secondColor.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AppTheme.primaryColor.withValues(alpha: 0.25),
+          // Botón de acceso rápido con Usuario Demo (controlado dinámicamente por Firebase / Config)
+          if (context.watch<AppConfig>().demoModeEnabled)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppTheme.secondColor.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.science_outlined,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Modo Demo de Prueba',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.forestDark,
+                          ),
+                        ),
+                        Text(
+                          'Usuario: demo  •  Clave: 1234',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppTheme.forestDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: auth.isAuthenticating
+                        ? null
+                        : () {
+                            DemoApiInterceptor.instance.activateDemoMode();
+                            _usernameController.text =
+                                DemoApiInterceptor.demoUsername;
+                            _passwordController.text =
+                                DemoApiInterceptor.demoPassword;
+                            _submitCredentials(
+                              username: DemoApiInterceptor.demoUsername,
+                              password: DemoApiInterceptor.demoPassword,
+                            );
+                          },
+                    child: const Text(
+                      'Entrar Demo',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.science_outlined,
-                  color: AppTheme.primaryColor,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Modo Demo de Prueba',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.forestDark,
-                        ),
-                      ),
-                      Text(
-                        'Usuario: demo  •  Clave: 1234',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: AppTheme.forestDark,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                TextButton(
-                  onPressed: auth.isAuthenticating
-                      ? null
-                      : () {
-                          _usernameController.text =
-                              DemoApiInterceptor.demoUsername;
-                          _passwordController.text =
-                              DemoApiInterceptor.demoPassword;
-                          _submitCredentials(
-                            username: DemoApiInterceptor.demoUsername,
-                            password: DemoApiInterceptor.demoPassword,
-                          );
-                        },
-                  child: const Text(
-                    'Entrar Demo',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
           if (bioService.isEnabled) ...[
             const SizedBox(height: 14),
             Row(

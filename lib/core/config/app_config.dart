@@ -24,11 +24,16 @@ class AppConfig extends ChangeNotifier {
     'SELLER_PROFILE_ID',
     defaultValue: 5,
   );
+  static const bool _defaultDemoModeEnabled = bool.fromEnvironment(
+    'DEMO_MODE_ENABLED',
+    defaultValue: false,
+  );
 
   String _apiBaseUrl = _defaultApiBaseUrl;
   String _brandName = _defaultBrandName;
   String _ticketFooter = _defaultTicketFooter;
   int _sellerProfileId = _defaultSellerProfileId;
+  bool _demoModeEnabled = _defaultDemoModeEnabled;
 
   // Control de versiones por Build desde Firebase Remote Config
   int _minRequiredBuild = 1;
@@ -49,6 +54,7 @@ class AppConfig extends ChangeNotifier {
   String get brandName => _brandName;
   String get ticketFooter => _ticketFooter;
   int get sellerProfileId => _sellerProfileId;
+  bool get demoModeEnabled => _demoModeEnabled;
 
   int get minRequiredBuild => _minRequiredBuild;
   int get latestRecommendedBuild => _latestRecommendedBuild;
@@ -89,6 +95,7 @@ class AppConfig extends ChangeNotifier {
     String? forceUpdateMessage,
     String? storeUrlAndroid,
     String? storeUrlIos,
+    bool? demoModeEnabled,
   }) {
     if (apiBaseUrl != null && apiBaseUrl.trim().isNotEmpty) {
       _apiBaseUrl = apiBaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
@@ -116,6 +123,9 @@ class AppConfig extends ChangeNotifier {
     }
     if (storeUrlIos != null && storeUrlIos.trim().isNotEmpty) {
       _storeUrlIos = storeUrlIos.trim();
+    }
+    if (demoModeEnabled != null) {
+      _demoModeEnabled = demoModeEnabled;
     }
     notifyListeners();
   }
