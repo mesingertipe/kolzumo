@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "973212437141",
+    "project_id": "kolzumo",
+    "storage_bucket": "kolzumo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:973212437141:android:e27a21e82c625653d7699c",
+        "android_client_info": {
+          "package_name": "co.com.kolzumo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAeKx2quiQen5qTLmuWXVvEniQAM_wn-ts"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
