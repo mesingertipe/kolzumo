@@ -7,7 +7,20 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Kolzumo App</string>
+	<string>KolZumo</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>KolZumo utiliza Face ID para permitirte iniciar sesión de forma rápida y segura.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>KolZumo utiliza Bluetooth para conectarse a la impresora térmica portátil e imprimir comprobantes de venta y cierre de día.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>KolZumo utiliza Bluetooth para conectarse a la impresora térmica portátil.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>KolZumo utiliza tu ubicación para registrar las coordenadas de cierre de ruta y facilitar el escaneo de impresoras Bluetooth.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
