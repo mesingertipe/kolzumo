@@ -255,23 +255,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ListTile(
                     leading: const Icon(Icons.bug_report_outlined, color: AppTheme.dangerColor),
                     title: const Text('Prueba de Crashlytics'),
-                    subtitle: const Text('Genera un error simulado para activar el panel en Firebase'),
-                    trailing: TextButton(
+                    subtitle: const Text('Fuerza un cierre de prueba para activar el panel en Firebase'),
+                    trailing: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.dangerColor,
+                        foregroundColor: Colors.white,
+                      ),
                       onPressed: () {
-                        TelemetryService.instance.recordError(
-                          Exception('Prueba de activación de Crashlytics desde KolZumo App'),
-                          StackTrace.current,
-                          reason: 'Prueba manual para encender el panel de Firebase',
-                          fatal: false,
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Evento de prueba enviado a Firebase Crashlytics con éxito.'),
-                            backgroundColor: AppTheme.primaryColor,
-                          ),
-                        );
+                        // Firebase Crashlytics requiere un crash nativo/fatal
+                        // y luego reabrir la app para enviar el reporte y activar la consola.
+                        FirebaseCrashlytics.instance.crash();
                       },
-                      child: const Text('Enviar Prueba'),
+                      child: const Text('Forzar Cierre'),
                     ),
                   ),
                   const Divider(height: 1),
