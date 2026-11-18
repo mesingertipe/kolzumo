@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
+import 'package:kolzumo_app/core/config/app_config.dart';
 import 'package:kolzumo_app/core/services/biometric_service.dart';
 import 'package:kolzumo_app/core/services/demo_api_interceptor.dart';
 import 'package:provider/provider.dart';
