@@ -1,11 +1,12 @@
 import 'package:dio/dio.dart';
 import '../config/app_config.dart';
+import '../services/demo_api_interceptor.dart';
 import '../services/telemetry_service.dart';
 
 /// Cliente HTTP centralizado para toda la aplicación.
 /// Toma dinámicamente la URL base desde AppConfig (que a su vez puede ser
-/// actualizada por Firebase Remote Config o --dart-define) y reporta errores
-/// de red automáticamente a Firebase Crashlytics.
+/// actualizada por Firebase Remote Config o --dart-define), soporta el
+/// interceptor de Usuario Demo (demo / 1234) y reporta errores de red a Crashlytics.
 class ApiClient {
   ApiClient._() {
     _dio = Dio(
@@ -21,10 +22,11 @@ class ApiClient {
       ),
     );
 
+    _dio.interceptors.add(DemoApiInterceptor.instance);
+
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          // Garantiza que siempre use la URL actualizada en AppConfig / Remote Config
           options.baseUrl = AppConfig.instance.apiBaseUrl;
           handler.next(options);
         },
@@ -45,4 +47,3 @@ class ApiClient {
 
   Dio get dio => _dio;
 }
-

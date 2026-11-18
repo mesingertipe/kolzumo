@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
 import 'package:kolzumo_app/data/database/database.dart';
 import 'package:kolzumo_app/infrastructure/formatters/currency_formatter.dart';

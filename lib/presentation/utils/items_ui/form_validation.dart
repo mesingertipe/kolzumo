@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
 import 'package:kolzumo_app/core/services/biometric_service.dart';
+import 'package:kolzumo_app/core/services/demo_api_interceptor.dart';
 import 'package:provider/provider.dart';
 import '../../../logic/auth_logic.dart';
 
@@ -313,6 +314,68 @@ class _FormValidationState extends State<FormValidation> {
               label: Text(
                 auth.isAuthenticating ? 'Verificando acceso...' : 'Iniciar sesión',
               ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Botón de acceso rápido con Usuario Demo para pruebas de APK / Tiendas
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppTheme.secondColor.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppTheme.primaryColor.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.science_outlined,
+                  color: AppTheme.primaryColor,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Modo Demo de Prueba',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.forestDark,
+                        ),
+                      ),
+                      Text(
+                        'Usuario: demo  •  Clave: 1234',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppTheme.forestDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: auth.isAuthenticating
+                      ? null
+                      : () {
+                          _usernameController.text =
+                              DemoApiInterceptor.demoUsername;
+                          _passwordController.text =
+                              DemoApiInterceptor.demoPassword;
+                          _submitCredentials(
+                            username: DemoApiInterceptor.demoUsername,
+                            password: DemoApiInterceptor.demoPassword,
+                          );
+                        },
+                  child: const Text(
+                    'Entrar Demo',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
           ),
           if (bioService.isEnabled) ...[
