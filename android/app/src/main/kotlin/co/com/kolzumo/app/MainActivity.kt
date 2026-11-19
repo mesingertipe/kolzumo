@@ -12,9 +12,12 @@ class MainActivity : FlutterFragmentActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CRASH_CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "forceCrash") {
-                // Lanza excepción Runtime nativa en el hilo principal de Android
-                // Esto genera un crash nativo 100% real interceptado por Firebase Crashlytics
-                throw RuntimeException("Crashlytics Test Crash desde Android Nativo - KolZumo App")
+                // En un hilo desacoplado de Flutter lanzamos el RuntimeException
+                // Esto garantiza que el sistema Android no pueda interceptarlo y tumbe el proceso
+                Thread {
+                    throw RuntimeException("Crashlytics Test Crash Nativo - KolZumo")
+                }.start()
+                result.success(true)
             } else {
                 result.notImplemented()
             }
