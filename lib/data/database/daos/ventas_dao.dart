@@ -156,6 +156,27 @@ class VentasDao extends DatabaseAccessor<AppDatabase> with _$VentasDaoMixin {
     return (select(ventas)..where((v) => v.sincronizado.equals(false))).get();
   }
 
+  /// Observa la cantidad de ventas pendientes de sincronizar en tiempo real.
+  Stream<int> watchVentasPendientesCount() {
+    final countExp = countAll();
+    final query = selectOnly(ventas)
+      ..addColumns([countExp])
+      ..where(ventas.sincronizado.equals(false));
+
+    return query.map((row) => row.read(countExp) ?? 0).watchSingle();
+  }
+
+  /// Marca múltiples ventas locales como sincronizadas.
+  Future<void> marcarVentasComoSincronizadas(List<int> ventaIds) async {
+    if (ventaIds.isEmpty) return;
+    await (update(ventas)..where((v) => v.id.isIn(ventaIds))).write(
+      VentasCompanion(
+        sincronizado: const Value(true),
+        fechaSincronizacion: Value(DateTime.now()),
+      ),
+    );
+  }
+
   /// Marca una venta como sincronizada, guardando el ID real
   /// asignado por el backend.
   Future<void> marcarComoSincronizada(int ventaLocalId, int idBackend) {

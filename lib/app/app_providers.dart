@@ -1,5 +1,6 @@
 import 'package:kolzumo_app/controllers/day_closing_controller.dart';
 import 'package:kolzumo_app/core/config/app_config.dart';
+import 'package:kolzumo_app/core/services/auto_sync_service.dart';
 import 'package:kolzumo_app/core/services/biometric_service.dart';
 import 'package:kolzumo_app/core/services/telemetry_service.dart';
 import 'package:kolzumo_app/data/repositories/resumen_dia_repo.dart';
@@ -49,6 +50,21 @@ List<SingleChildWidget> buildAppProviders({
     ChangeNotifierProvider(create: (_) => VehiculoProvider()),
     ChangeNotifierProvider(create: (_) => ThermalPrinterController()..init()),
     ChangeNotifierProvider(create: (_) => DayClosingController()),
+    ChangeNotifierProxyProvider<Auth, AutoSyncQueueService>(
+      create: (ctx) => AutoSyncQueueService(
+        database: database,
+        resumenDiaRepository: resumenDiaRepository,
+        getCurrentUser: () => ctx.read<Auth>().userAccount,
+      )..start(),
+      update: (ctx, auth, syncService) {
+        return syncService ??
+            (AutoSyncQueueService(
+              database: database,
+              resumenDiaRepository: resumenDiaRepository,
+              getCurrentUser: () => auth.userAccount,
+            )..start());
+      },
+    ),
     ChangeNotifierProxyProvider<ClienteProvider, CheckoutProvider>(
       create: (_) => CheckoutProvider(),
       update: (_, clienteProvider, checkout) {
