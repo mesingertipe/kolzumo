@@ -61,8 +61,9 @@ class TelemetryService extends ChangeNotifier {
       );
       _isInitialized = true;
 
-      await _setupCrashlytics();
+      // Remote Config primero para sincronizar parámetros inmediatamente
       await _setupRemoteConfig();
+      await _setupCrashlytics();
       await _setupPushNotifications();
     } catch (e, stack) {
       debugPrint('Firebase inicializó en modo local/resiliente: $e\n$stack');
@@ -115,7 +116,8 @@ class TelemetryService extends ChangeNotifier {
         'store_url_ios': 'https://apps.apple.com',
       });
 
-      await remoteConfig.fetchAndActivate();
+      final fetched = await remoteConfig.fetchAndActivate();
+      debugPrint('Remote Config fetchAndActivate completado: $fetched');
       _syncRemoteValues(remoteConfig);
 
       remoteConfig.onConfigUpdated.listen((_) async {
@@ -136,6 +138,9 @@ class TelemetryService extends ChangeNotifier {
       isIos ? 'latest_build_ios' : 'latest_build_android',
     );
 
+    final isDemoRemote = rc.getBool('demo_mode_enabled');
+    debugPrint('Sincronizando Remote Config: demo_mode_enabled = $isDemoRemote');
+
     AppConfig.instance.applyRemoteConfig(
       apiBaseUrl: rc.getString('api_base_url'),
       brandName: rc.getString('brand_name'),
@@ -144,11 +149,11 @@ class TelemetryService extends ChangeNotifier {
       minRequiredBuild: minBuild,
       latestRecommendedBuild: latestBuild,
       forceUpdateMessage: rc.getString('force_update_message'),
-      demoModeEnabled: rc.getBool('demo_mode_enabled'),
+      demoModeEnabled: isDemoRemote,
       storeUrlAndroid: rc.getString('store_url_android'),
       storeUrlIos: rc.getString('store_url_ios'),
     );
-    if (rc.getBool('demo_mode_enabled')) {
+    if (isDemoRemote) {
       DemoApiInterceptor.instance.activateDemoMode();
     } else {
       DemoApiInterceptor.instance.deactivateDemoMode();
