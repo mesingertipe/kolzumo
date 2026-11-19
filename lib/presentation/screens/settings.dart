@@ -262,10 +262,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         backgroundColor: AppTheme.dangerColor,
                         foregroundColor: Colors.white,
                       ),
-                      onPressed: () {
-                        // Firebase Crashlytics requiere un crash nativo/fatal
-                        // y luego reabrir la app para enviar el reporte y activar la consola.
-                        FirebaseCrashlytics.instance.crash();
+                      onPressed: () async {
+                        // 1. Registra un error crítico primero en Crashlytics
+                        await FirebaseCrashlytics.instance.recordError(
+                          Exception('Prueba de activación forzada desde KolZumo'),
+                          StackTrace.current,
+                          fatal: true,
+                          reason: 'Forzado manual para activar panel en Firebase',
+                        );
+                        // 2. Dispara el crash nativo directo de Android
+                        const channel = MethodChannel('co.com.kolzumo.app/crash_test');
+                        try {
+                          await channel.invokeMethod('forceCrash');
+                        } catch (_) {
+                          // Si falla el canal nativo, fuerza crash en Dart
+                          FirebaseCrashlytics.instance.crash();
+                        }
                       },
                       child: const Text('Forzar Cierre'),
                     ),
