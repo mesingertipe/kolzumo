@@ -85,7 +85,12 @@ class _DropdownItemsState extends State<DropdownItems> {
 
       onSelected: (model.Ruta? ruta) async {
         context.read<RutaProvider>().seleccionarRuta(ruta);
-        await context.read<ClienteProvider>().cargarClientes(ruta!.nombreruta);
+        if (ruta != null) {
+          await context.read<ClienteProvider>().cargarClientes(
+            ruta.nombreruta,
+            rutaId: ruta.idruta,
+          );
+        }
       },
 
       validator: (ruta) {

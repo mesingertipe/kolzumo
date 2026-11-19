@@ -109,6 +109,7 @@ class _FormValidationState extends State<FormValidation> {
     required String password,
   }) async {
     final bioService = context.read<BiometricService>();
+    final biometricLabel = await bioService.getBiometricTypeLabel();
 
     await showDialog<void>(
       context: context,
@@ -127,19 +128,32 @@ class _FormValidationState extends State<FormValidation> {
               color: AppTheme.primaryColor,
             ),
           ),
-          title: const Text(
-            '¿Activar ingreso con Biometría?',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
-          ),
-          content: const Text(
-            'Puedes usar tu huella digital o reconocimiento facial para iniciar sesión en 1 segundo sin escribir tu contraseña.\n\nTambién podrás activarlo o desactivarlo cuando quieras desde el apartado de Seguridad.',
+          title: Text(
+            '¿Activar $biometricLabel?',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '¿Quieres ingresar más rápido la próxima vez? Activa tu $biometricLabel ahora para iniciar sesión en 1 segundo sin digitar tu contraseña.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, height: 1.35),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Si eliges "Más tarde", podrás activarlo cuando quieras desde el menú Configuración > Seguridad.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+              ),
+            ],
           ),
           actionsAlignment: MainAxisAlignment.spaceBetween,
           actions: [
             TextButton(
               onPressed: () async {
+                // Solo se pregunta una vez. Si no desea, queda marcado y deberá ir a Seguridad.
                 await bioService.markPrompted(username);
                 if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
               },
@@ -155,8 +169,8 @@ class _FormValidationState extends State<FormValidation> {
                 Navigator.of(dialogCtx).pop();
                 if (mounted && activated) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Acceso biométrico activado con éxito'),
+                    SnackBar(
+                      content: Text('$biometricLabel activado con éxito'),
                       backgroundColor: AppTheme.primaryColor,
                     ),
                   );

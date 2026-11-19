@@ -3,7 +3,9 @@ import 'package:kolzumo_app/core/config/app_config.dart';
 import 'package:kolzumo_app/core/services/auto_sync_service.dart';
 import 'package:kolzumo_app/core/services/biometric_service.dart';
 import 'package:kolzumo_app/core/services/telemetry_service.dart';
+import 'package:kolzumo_app/data/repositories/cliente_repo.dart';
 import 'package:kolzumo_app/data/repositories/resumen_dia_repo.dart';
+import 'package:kolzumo_app/services/cliente_service.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import '../controllers/thermal_printer_controller.dart';
@@ -37,6 +39,9 @@ List<SingleChildWidget> buildAppProviders({
     Provider<AppDatabase>.value(value: database),
     Provider<PreciosRepository>.value(value: preciosRepository),
     Provider<ResumenDiaRepository>.value(value: resumenDiaRepository),
+    Provider<ClientesRepository>(
+      create: (_) => ClientesRepository(database, ClienteService()),
+    ),
     Provider<SessionSyncService>(
       create: (_) => SessionSyncService(database, preciosRepository),
     ),
@@ -44,7 +49,11 @@ List<SingleChildWidget> buildAppProviders({
     ChangeNotifierProvider(create: (_) => RutaProvider()),
     ChangeNotifierProvider(create: (_) => CartProvider()),
     ChangeNotifierProvider(create: (_) => InventarioProvider()),
-    ChangeNotifierProvider(create: (_) => ClienteProvider()),
+    ChangeNotifierProxyProvider<ClientesRepository, ClienteProvider>(
+      create: (ctx) => ClienteProvider()
+        ..setRepository(ctx.read<ClientesRepository>()),
+      update: (_, repo, prov) => (prov ?? ClienteProvider())..setRepository(repo),
+    ),
     ChangeNotifierProvider(create: (_) => PreciosProvider()),
     ChangeNotifierProvider(create: (_) => PedidosPendientesProvider()),
     ChangeNotifierProvider(create: (_) => VehiculoProvider()),

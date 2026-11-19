@@ -100,7 +100,10 @@ class _SessionSyncGateState extends State<SessionSyncGate> {
     if (!mounted) return;
     final ruta = rutaProv.rutaSeleccionada;
     if (ruta != null) {
-      await context.read<ClienteProvider>().cargarClientes(ruta.nombreruta);
+      await context.read<ClienteProvider>().cargarClientes(
+        ruta.nombreruta,
+        rutaId: ruta.idruta,
+      );
     }
   }
 

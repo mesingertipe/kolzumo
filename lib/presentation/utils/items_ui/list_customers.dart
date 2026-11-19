@@ -159,8 +159,11 @@ class _ListCustomersState extends State<ListCustomers> {
               ),
               if (rutaSeleccionada != null)
                 TextButton.icon(
-                  onPressed: () => clientesProvider
-                      .cargarClientes(rutaSeleccionada.nombreruta),
+                  onPressed: () => clientesProvider.cargarClientes(
+                    rutaSeleccionada.nombreruta,
+                    rutaId: rutaSeleccionada.idruta,
+                    forceRefresh: true,
+                  ),
                   icon: const Icon(Icons.refresh, size: 16),
                   label: const Text('Refrescar'),
                 ),

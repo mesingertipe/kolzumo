@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kolzumo_app/core/network/api_client.dart';
 import 'package:kolzumo_app/core/services/telemetry_service.dart';
@@ -188,3 +187,4 @@ class AutoSyncQueueService extends ChangeNotifier {
     super.dispose();
   }
 }
+

@@ -7,3 +7,4 @@ void main() {
     expect(SyncConnectionState.values.length, 3);
   });
 }
+

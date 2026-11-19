@@ -37,12 +37,92 @@ class _HomeAppState extends State<HomeApp> {
     super.initState();
     _currentTab = widget.initialTab;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final user = context.read<Auth>().userAccount;
       if (user != null) {
         context
             .read<PedidosPendientesProvider>()
             .cargarPedidos(user.idvendedor);
+
+        // Si el usuario tiene sesión guardada y nunca se le ha preguntado por biometría,
+        // le invitamos a enrolarla una única vez. Si rechaza, deberá ir a Seguridad.
+        final bioService = context.read<BiometricService>();
+        if (await bioService.shouldPromptFirstTime(user.nombre)) {
+          if (!mounted) return;
+          final biometricLabel = await bioService.getBiometricTypeLabel();
+          if (!mounted) return;
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogCtx) {
+              return AlertDialog(
+                icon: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.secondColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.fingerprint_rounded,
+                    size: 40,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+                title: Text(
+                  '¿Activar $biometricLabel?',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  textAlign: TextAlign.center,
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '¿Quieres ingresar más rápido la próxima vez? Activa tu $biometricLabel ahora para iniciar sesión en 1 segundo sin digitar tu contraseña.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 14, height: 1.35),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Si eliges "Más tarde", podrás activarlo cuando quieras desde el menú Configuración > Seguridad.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+                    ),
+                  ],
+                ),
+                actionsAlignment: MainAxisAlignment.spaceBetween,
+                actions: [
+                  TextButton(
+                    onPressed: () async {
+                      await bioService.markPrompted(user.nombre);
+                      if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+                    },
+                    child: const Text('Más tarde'),
+                  ),
+                  FilledButton.icon(
+                    onPressed: () async {
+                      final activated = await bioService.enableBiometrics(
+                        username: user.nombre,
+                        password: user.clave,
+                      );
+                      if (!dialogCtx.mounted) return;
+                      Navigator.of(dialogCtx).pop();
+                      if (mounted && activated) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('$biometricLabel activado con éxito'),
+                            backgroundColor: AppTheme.primaryColor,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
+                    label: const Text('Activar ahora'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
       }
     });
   }

@@ -26,7 +26,7 @@ class SessionSyncService {
     final rutaServ = RutaService();
     final rutaRepoDB = RutaRepositoryDB(database, rutaServ);
     final clienteServ = ClienteService();
-    final clienteRepoDB = ClienteRepositoryDB(database, clienteServ);
+    final clienteRepoDB = ClientesRepository(database, clienteServ);
     final promocionesDao = PromocionesDao(database);
     final formaPagoServ = await MetodopagoService().getMetodosPago();
     final promService = await PromocionService().getPromociones();
@@ -35,7 +35,10 @@ class SessionSyncService {
       'categorias_cliente': catClienteRepoDB.insertCategoriasCliente,
       'inventario': inventarioRepoDB.sincronizarProductos,
       'rutas': rutaRepoDB.insertRutas,
-      'clientes': clienteRepoDB.insertClientes,
+      'clientes': () async {
+        final remotos = await clienteServ.getClientes('');
+        await clienteRepoDB.sincronizarEnDb(remotos);
+      },
       'precios': preciosRepository.insertPrecios,
     };
 

@@ -34,19 +34,28 @@ class BiometricService extends ChangeNotifier {
     _savedUsername = prefs.getString(_keyBiometricUsername);
     _rememberedUsername = prefs.getString(_keyRememberedUser);
 
-    if (!kIsWeb) {
-      try {
-        final isSupported = await _localAuth.isDeviceSupported();
-        final canCheck = await _localAuth.canCheckBiometrics;
-        final availableBiometrics = await _localAuth.getAvailableBiometrics();
-        _isHardwareAvailable =
-            (isSupported && canCheck) || availableBiometrics.isNotEmpty;
-      } catch (e) {
-        debugPrint('Biometría no disponible en este dispositivo: $e');
-        _isHardwareAvailable = false;
-      }
+    await checkHardwareAvailability();
+    notifyListeners();
+  }
+
+  /// Verifica la disponibilidad física o lógica de biometría en el dispositivo.
+  Future<bool> checkHardwareAvailability() async {
+    if (kIsWeb) {
+      _isHardwareAvailable = false;
+      return false;
+    }
+    try {
+      final isSupported = await _localAuth.isDeviceSupported();
+      final canCheck = await _localAuth.canCheckBiometrics;
+      final availableBiometrics = await _localAuth.getAvailableBiometrics();
+      _isHardwareAvailable =
+          isSupported || canCheck || availableBiometrics.isNotEmpty;
+    } catch (e) {
+      debugPrint('Biometría no disponible en este dispositivo: $e');
+      _isHardwareAvailable = false;
     }
     notifyListeners();
+    return _isHardwareAvailable;
   }
 
   Future<void> saveRememberedUsername(String? username) async {
@@ -62,9 +71,15 @@ class BiometricService extends ChangeNotifier {
   }
 
   /// Verifica si al usuario ya se le preguntó en su primer inicio de sesión
-  /// si desea activar el ingreso con biometría.
+  /// si desea activar el ingreso con biometría (Huella o Face ID).
   Future<bool> shouldPromptFirstTime(String username) async {
-    if (!_isHardwareAvailable || _isEnabled) return false;
+    // Si ya está habilitado, no hay nada que invitar
+    if (_isEnabled) return false;
+
+    // Re-chequea hardware en caliente por si el SDK tardó en responder al arranque
+    final hardwareOk = await checkHardwareAvailability();
+    if (!hardwareOk) return false;
+
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keyPromptedPrefix${username.trim().toLowerCase()}';
     return !(prefs.getBool(key) ?? false);
@@ -74,6 +89,21 @@ class BiometricService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final key = '$_keyPromptedPrefix${username.trim().toLowerCase()}';
     await prefs.setBool(key, true);
+  }
+
+  /// Tipo de biometría disponible en texto legible (ej: "Huella Digital", "Face ID / Reconocimiento facial")
+  Future<String> getBiometricTypeLabel() async {
+    try {
+      final biometrics = await _localAuth.getAvailableBiometrics();
+      if (biometrics.contains(BiometricType.face)) {
+        return 'Face ID / Reconocimiento Facial';
+      } else if (biometrics.contains(BiometricType.fingerprint) ||
+                 biometrics.contains(BiometricType.strong) ||
+                 biometrics.contains(BiometricType.weak)) {
+        return 'Huella Digital';
+      }
+    } catch (_) {}
+    return 'Huella Digital o Face ID';
   }
 
   /// Solicita validación de huella / Face ID al sistema operativo.

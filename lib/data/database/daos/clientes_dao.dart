@@ -12,6 +12,20 @@ class ClientesDao extends DatabaseAccessor<AppDatabase>
 
   Future<List<Cliente>> obtenerTodos() => select(clientes).get();
 
+  /// Obtiene los clientes asignados a una ruta específica desde SQLite local.
+  Future<List<Cliente>> obtenerPorRutaId(int rutaId) {
+    return (select(clientes)
+          ..where((c) => c.rutaId.equals(rutaId) & c.activo.equals(true)))
+        .get();
+  }
+
+  /// Observa los clientes activos de una ruta en tiempo real.
+  Stream<List<Cliente>> watchPorRutaId(int rutaId) {
+    return (select(clientes)
+          ..where((c) => c.rutaId.equals(rutaId) & c.activo.equals(true)))
+        .watch();
+  }
+
   Stream<List<Cliente>> watchActivos() =>
       (select(clientes)..where((c) => c.activo.equals(true))).watch();
 
