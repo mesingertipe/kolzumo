@@ -255,39 +255,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: const Icon(Icons.bug_report_outlined, color: AppTheme.dangerColor),
-                    title: const Text('Prueba de Crashlytics'),
-                    subtitle: const Text('Fuerza un cierre de prueba para activar el panel en Firebase'),
-                    trailing: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.dangerColor,
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () async {
-                        // 1. Log en consola y Crashlytics
-                        debugPrint('DISPARANDO CRASH CONTROLADO PARA FIREBASE...');
-                        await FirebaseCrashlytics.instance.setCustomKey('test_timestamp', DateTime.now().toIso8601String());
-                        await FirebaseCrashlytics.instance.recordError(
-                          Exception('Fallo forzado desde KolZumo Settings para activar Firebase Crashlytics'),
-                          StackTrace.current,
-                          fatal: true,
-                        );
-
-                        // 2. Dispara el crash nativo en Android que tumba el proceso
-                        final channel = MethodChannel('co.com.kolzumo.app/crash_test');
-                        try {
-                          await channel.invokeMethod('forceCrash');
-                        } catch (_) {}
-
-                        // 3. Fallback adicional
-                        await Future.delayed(const Duration(milliseconds: 300));
-                        FirebaseCrashlytics.instance.crash();
-                      },
-                      child: const Text('Forzar Cierre'),
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
                     leading: Icon(
                       telemetry.isInitialized
                           ? Icons.verified_rounded
