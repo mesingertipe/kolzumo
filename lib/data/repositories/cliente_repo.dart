@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:drift/drift.dart';
 import 'package:kolzumo_app/core/network/result.dart';
 import 'package:kolzumo_app/data/database/database.dart';
 import 'package:kolzumo_app/infrastructure/helpers/resultado_sincronizacion_helper.dart';
@@ -94,9 +95,11 @@ class ClientesRepository {
 
   /// Mapeador de Drift DataClass -> Model de Dominio
   model.Cliente _mapDbToModel(Cliente row) {
+    final now = DateTime.now();
     return model.Cliente(
       idcliente: row.id,
       idtipodocumento: row.tipoDocumentoId,
+      nombretipodocumento: '',
       documento: row.documento,
       nombreestablecimiento: row.nombreEstablecimiento,
       direccion: row.direccion,
@@ -104,18 +107,26 @@ class ClientesRepository {
       email: row.email ?? '',
       administrador: row.administrador ?? '',
       barrio: row.barrio ?? '',
+      gps: null,
+      consecutivoentrega: 0,
       ivadiscrimina: row.ivaDiscrimina ? 1 : 0,
+      iva: '0%',
       pagocredito: row.pagoCredito ? 1 : 0,
+      credito: row.pagoCredito ? 'Si' : 'No',
       cupo: row.cupo,
       plazo: row.plazo ?? 0,
       estado: row.activo ? 1 : 0,
+      nombreestado: row.activo ? 'Activo' : 'Inactivo',
       idcategoriaCliente: row.categoriaClienteId,
-      categoriacliente: '',
+      nombrecategoriaCliente: '',
       idruta: row.rutaId,
       nombreruta: '',
       idciudad: row.ciudadId,
-      ciudad: '',
-      credito: row.pagoCredito ? 'Si' : 'No',
+      nombreciudad: '',
+      horariodesde: '',
+      horariohasta: '',
+      horariodesdetime: now,
+      horariohastatime: now,
       mensaje: null,
     );
   }

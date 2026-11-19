@@ -45,3 +45,4 @@ class ThemeController extends ChangeNotifier {
     }
   }
 }
+

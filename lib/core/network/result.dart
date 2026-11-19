@@ -54,7 +54,11 @@ sealed class AppFailure {
 
 /// Fallas de red o falta de conexión
 class NetworkFailure extends AppFailure {
-  const NetworkFailure([super.message = 'Sin conexión a internet o tiempo de espera agotado.', super.error, super.stackTrace]);
+  const NetworkFailure([
+    String message = 'Sin conexión a internet o tiempo de espera agotado.',
+    Object? error,
+    StackTrace? stackTrace,
+  ]) : super(message, error: error, stackTrace: stackTrace);
 }
 
 /// Fallas del servidor VPS / HTTP 500 / 400

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
+import 'package:kolzumo_app/core/services/biometric_service.dart';
 import 'package:kolzumo_app/core/theme/theme_controller.dart';
 import 'package:kolzumo_app/data/database/database.dart';
 import 'package:kolzumo_app/infrastructure/formatters/currency_formatter.dart';
