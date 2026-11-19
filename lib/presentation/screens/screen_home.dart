@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
+import 'package:kolzumo_app/core/theme/theme_controller.dart';
 import 'package:kolzumo_app/data/database/database.dart';
 import 'package:kolzumo_app/infrastructure/formatters/currency_formatter.dart';
 import 'package:kolzumo_app/infrastructure/models/seller_stats.dart';
@@ -172,6 +173,17 @@ class _HomeAppState extends State<HomeApp> {
       appBar: AppBar(
         title: Text(titles[_currentTab]),
         actions: [
+          IconButton(
+            tooltip: 'Cambiar Modo Claro/Oscuro',
+            onPressed: () {
+              context.read<ThemeController>().toggleTheme();
+            },
+            icon: Icon(
+              context.watch<ThemeController>().isDarkMode
+                  ? Icons.light_mode_rounded
+                  : Icons.dark_mode_rounded,
+            ),
+          ),
           IconButton(
             tooltip: 'Sincronizar datos con servidor',
             onPressed: _isSyncingCatalogs ? null : _resyncCatalogs,

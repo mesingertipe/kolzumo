@@ -5,6 +5,7 @@ import 'package:kolzumo_app/app/auth_gate.dart';
 import 'package:kolzumo_app/core/config/app_config.dart';
 import 'package:kolzumo_app/core/services/biometric_service.dart';
 import 'package:kolzumo_app/core/services/telemetry_service.dart';
+import 'package:kolzumo_app/core/theme/theme_controller.dart';
 import 'package:kolzumo_app/data/repositories/resumen_dia_repo.dart';
 import 'package:kolzumo_app/infrastructure/models/userauth.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/version_guard_wrapper.dart';
@@ -24,6 +25,10 @@ void main() async {
   final biometricService = BiometricService();
   await biometricService.init();
 
+  // Inicializa preferencia de tema visual (Claro / Oscuro)
+  final themeController = ThemeController();
+  await themeController.init();
+
   final database = AppDatabase();
   final preciosRepository = PreciosRepository(database);
   final resumenDiaRepository = ResumenDiaRepository(database);
@@ -38,6 +43,7 @@ void main() async {
       preciosRepository: preciosRepository,
       resumenDiaRepository: resumenDiaRepository,
       biometricService: biometricService,
+      themeController: themeController,
     ),
   );
 }
@@ -48,6 +54,7 @@ class MainApp extends StatelessWidget {
   final PreciosRepository preciosRepository;
   final ResumenDiaRepository resumenDiaRepository;
   final BiometricService biometricService;
+  final ThemeController themeController;
 
   const MainApp({
     super.key,
@@ -56,6 +63,7 @@ class MainApp extends StatelessWidget {
     required this.preciosRepository,
     required this.resumenDiaRepository,
     required this.biometricService,
+    required this.themeController,
   });
 
   @override
@@ -67,16 +75,23 @@ class MainApp extends StatelessWidget {
         resumenDiaRepository: resumenDiaRepository,
         initialUser: initialUser,
         biometricService: biometricService,
+        themeController: themeController,
       ),
-      child: MaterialApp(
-        title: AppConfig.instance.brandName,
-        theme: AppTheme().lightTheme,
-        debugShowCheckedModeBanner: false,
-        builder: (context, child) => VersionGuardWrapper(
-          child: child ?? const SizedBox.shrink(),
-        ),
-        home: const AuthGate(),
-        routes: AppRoutes.routes,
+      child: Consumer<ThemeController>(
+        builder: (context, themeCtrl, _) {
+          return MaterialApp(
+            title: AppConfig.instance.brandName,
+            theme: AppTheme().lightTheme,
+            darkTheme: AppTheme().darkTheme,
+            themeMode: themeCtrl.themeMode,
+            debugShowCheckedModeBanner: false,
+            builder: (context, child) => VersionGuardWrapper(
+              child: child ?? const SizedBox.shrink(),
+            ),
+            home: const AuthGate(),
+            routes: AppRoutes.routes,
+          );
+        },
       ),
     );
   }

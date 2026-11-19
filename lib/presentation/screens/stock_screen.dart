@@ -5,9 +5,9 @@ import 'package:kolzumo_app/data/database/database.dart';
 import 'package:kolzumo_app/infrastructure/models/inventario_model.dart';
 import 'package:kolzumo_app/infrastructure/models/precios_model.dart';
 import 'package:kolzumo_app/infrastructure/models/promocion_model.dart' as modelprom;
-import 'package:kolzumo_app/presentation/utils/items_ui/bottom_sheet_stock.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/cart_icon_badge.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/cart_item_widget.dart';
+import 'package:kolzumo_app/presentation/utils/items_ui/floating_cart_bar.dart';
 import 'package:kolzumo_app/providers/cliente_provider.dart';
 import 'package:kolzumo_app/providers/precio_provider.dart';
 import 'package:kolzumo_app/providers/ruta_provider.dart';
@@ -284,7 +284,8 @@ class _StockWidgetState extends State<StockScreen> {
                 ),
       bottomSheet: Container(
         key: _bottomSheetKey,
-        child: BottomSheetStock(
+        color: Colors.transparent,
+        child: FloatingCartBar(
           total: total,
           cart: cart,
           cliente: customer,

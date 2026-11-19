@@ -3,6 +3,7 @@ import 'package:kolzumo_app/core/config/app_config.dart';
 import 'package:kolzumo_app/core/services/auto_sync_service.dart';
 import 'package:kolzumo_app/core/services/biometric_service.dart';
 import 'package:kolzumo_app/core/services/telemetry_service.dart';
+import 'package:kolzumo_app/core/theme/theme_controller.dart';
 import 'package:kolzumo_app/data/repositories/cliente_repo.dart';
 import 'package:kolzumo_app/data/repositories/resumen_dia_repo.dart';
 import 'package:kolzumo_app/services/cliente_service.dart';
@@ -29,8 +30,10 @@ List<SingleChildWidget> buildAppProviders({
   required ResumenDiaRepository resumenDiaRepository,
   required UserAuth? initialUser,
   required BiometricService biometricService,
+  required ThemeController themeController,
 }) {
   return [
+    ChangeNotifierProvider<ThemeController>.value(value: themeController),
     ChangeNotifierProvider<AppConfig>.value(value: AppConfig.instance),
     ChangeNotifierProvider<TelemetryService>.value(
       value: TelemetryService.instance,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:kolzumo_app/infrastructure/formatters/currency_formatter.dart';
 import 'package:kolzumo_app/infrastructure/models/cliente_model.dart';
 import 'package:kolzumo_app/infrastructure/models/inventario_model.dart';
@@ -40,11 +41,13 @@ class CartItemWidget extends StatelessWidget {
     }
 
     if (consumo <= stockItem.cantidad) {
+      HapticFeedback.lightImpact();
       cart.setQuantity(stockItem.idproducto, newQty);
       if (!cart.inCart(stockItem.idproducto)) {
         cart.addItem(stockItem.idproducto);
       }
     } else {
+      HapticFeedback.heavyImpact();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -199,7 +202,10 @@ class CartItemWidget extends StatelessWidget {
                   IconButton(
                     tooltip: 'Limpiar cantidad',
                     onPressed: hasQuantity
-                        ? () => cart.remove(stockItem.idproducto)
+                        ? () {
+                            HapticFeedback.mediumImpact();
+                            cart.remove(stockItem.idproducto);
+                          }
                         : null,
                     icon: Icon(
                       Icons.delete_outline_rounded,

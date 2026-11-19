@@ -6,6 +6,7 @@ import 'package:kolzumo_app/controllers/thermal_printer_controller.dart';
 import 'package:kolzumo_app/core/config/app_config.dart';
 import 'package:kolzumo_app/core/services/biometric_service.dart';
 import 'package:kolzumo_app/core/services/telemetry_service.dart';
+import 'package:kolzumo_app/core/theme/theme_controller.dart';
 import 'package:kolzumo_app/logic/auth_logic.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/menu_burguer.dart';
 import 'package:kolzumo_app/services/session_sync_service.dart';
@@ -55,6 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final printer = context.watch<ThermalPrinterController>();
     final config = context.watch<AppConfig>();
     final telemetry = context.watch<TelemetryService>();
+    final themeCtrl = context.watch<ThemeController>();
 
     return Scaffold(
       appBar: AppBar(
@@ -64,6 +66,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // 0. Modo Visual (Claro / Oscuro)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          themeCtrl.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'APARIENCIA VISUAL',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SwitchListTile(
+                    title: const Text(
+                      'Modo Oscuro (Noche / Ahorro de Batería)',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      themeCtrl.isDarkMode
+                          ? 'Tema oscuro activo. Ideal para jornadas nocturnas o reducir consumo de batería OLED.'
+                          : 'Tema claro activo con el verde corporativo KolZumo.',
+                    ),
+                    value: themeCtrl.isDarkMode,
+                    onChanged: (val) async {
+                      HapticFeedback.selectionClick();
+                      await themeCtrl.setThemeMode(val ? ThemeMode.dark : ThemeMode.light);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // 1. Apartado de Seguridad y Biometría
           Card(
             child: Padding(
