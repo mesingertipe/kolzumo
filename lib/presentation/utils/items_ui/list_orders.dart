@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
 import 'package:kolzumo_app/infrastructure/models/inventario_model.dart';
+import 'package:kolzumo_app/presentation/screens/order_reception_screen.dart';
 
 import '../../../infrastructure/models/pedido_pendiente_model.dart';
-import 'modal_inventario.dart';
 
 class ListOrders extends StatelessWidget {
   final List<PedidosPendientes> orders;
@@ -81,18 +81,11 @@ class ListOrders extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () {
-              showDialog(
-                context: context,
-                builder: (_) {
-                  final inventarios = order.detallepedidovendedor
-                      .map(Inventario.fromDetallePedido)
-                      .toList();
-                  return ModalInventario(
-                    inventarios: inventarios,
-                    origen: 'home',
-                    idPedido: order.idpedidovendedor,
-                  );
-                },
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OrderReceptionScreen(order: order),
+                ),
               );
             },
             child: Padding(
