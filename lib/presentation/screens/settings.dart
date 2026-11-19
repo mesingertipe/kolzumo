@@ -1,5 +1,6 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
 import 'package:kolzumo_app/controllers/thermal_printer_controller.dart';
 import 'package:kolzumo_app/core/config/app_config.dart';
@@ -271,7 +272,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           reason: 'Forzado manual para activar panel en Firebase',
                         );
                         // 2. Dispara el crash nativo directo de Android
-                        const channel = MethodChannel('co.com.kolzumo.app/crash_test');
+                        final channel = MethodChannel('co.com.kolzumo.app/crash_test');
                         try {
                           await channel.invokeMethod('forceCrash');
                         } catch (_) {
