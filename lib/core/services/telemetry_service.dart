@@ -66,7 +66,11 @@ class TelemetryService extends ChangeNotifier {
 
       // Remote Config primero para sincronizar parámetros inmediatamente
       await _setupRemoteConfig();
-      await _setupCrashlytics();
+      try {
+        await _setupCrashlytics();
+      } catch (crashErr) {
+        debugPrint('Crashlytics no se pudo vincular (componente omitido): $crashErr');
+      }
       await _setupPushNotifications();
     } catch (e, stack) {
       debugPrint('Firebase inicializó en modo local/resiliente: $e\n$stack');
