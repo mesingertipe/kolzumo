@@ -6,6 +6,7 @@ import 'package:kolzumo_app/data/database/database.dart';
 import 'package:kolzumo_app/infrastructure/formatters/currency_formatter.dart';
 import 'package:kolzumo_app/infrastructure/models/seller_stats.dart';
 import 'package:kolzumo_app/infrastructure/repositories/inventario_repository.dart';
+import 'package:kolzumo_app/presentation/screens/assigned_inventory_screen.dart';
 import 'package:kolzumo_app/presentation/screens/printer_devices_screen.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/content_profile.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/list_customers.dart';
@@ -459,10 +460,12 @@ class _JornadaDashboardTab extends StatelessWidget {
                             final inventarios = await InventarioRepository()
                                 .getInventario(user.idvendedor);
                             if (!context.mounted) return;
-                            showDialog(
-                              context: context,
-                              builder: (_) =>
-                                  ModalInventario(inventarios: inventarios),
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => AssignedInventoryScreen(
+                                  inventarios: inventarios,
+                                ),
+                              ),
                             );
                           },
                           icon: const Icon(Icons.inventory_2_outlined, size: 18),

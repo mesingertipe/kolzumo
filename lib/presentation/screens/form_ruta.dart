@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kolzumo_app/core/services/telemetry_service.dart';
 import 'package:kolzumo_app/infrastructure/repositories/inventario_repository.dart';
+import 'package:kolzumo_app/presentation/screens/assigned_inventory_screen.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/dropdown_ruta.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/dropdown_vehiculo.dart';
 import 'package:kolzumo_app/providers/ruta_provider.dart';
@@ -50,15 +51,17 @@ class _FormRutaState extends State<FormRuta> {
           await InventarioRepository().getInventario(user.idvendedor);
 
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (_) => ModalInventario(
-          inventarios: inventarios,
-          onApproved: () {
-            if (mounted && Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            }
-          },
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AssignedInventoryScreen(
+            inventarios: inventarios,
+            isStartingDay: true,
+            onConfirmed: () {
+              if (mounted && Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
         ),
       );
     } finally {

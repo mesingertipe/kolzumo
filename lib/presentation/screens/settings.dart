@@ -320,8 +320,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     subtitle: Text(
                       telemetry.isInitialized
-                          ? 'Conectado • Build mínimo requerido: ${config.minRequiredBuild}'
-                          : 'Operando en modo local resiliente',
+                          ? 'Conectado a la nube • Build mínimo requerido: ${config.minRequiredBuild}'
+                          : (telemetry.initErrorDetail != null
+                              ? 'Operando en modo local resiliente (${telemetry.initErrorDetail})'
+                              : 'Operando en modo local resiliente (Sin conexión a servicios en la nube)'),
                     ),
                   ),
                   Padding(

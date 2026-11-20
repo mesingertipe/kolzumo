@@ -40,10 +40,12 @@ class TelemetryService extends ChangeNotifier {
   static final TelemetryService instance = TelemetryService._();
 
   bool _isInitialized = false;
+  String? _initErrorDetail;
   String? _fcmToken;
   PushNotificationEvent? _latestNotification;
 
   bool get isInitialized => _isInitialized;
+  String? get initErrorDetail => _initErrorDetail;
   String? get fcmToken => _fcmToken;
 
   PushNotificationEvent? consumeLatestNotification() {
@@ -60,6 +62,7 @@ class TelemetryService extends ChangeNotifier {
         options: DefaultFirebaseOptions.currentPlatform,
       );
       _isInitialized = true;
+      _initErrorDetail = null;
 
       // Remote Config primero para sincronizar parámetros inmediatamente
       await _setupRemoteConfig();
@@ -68,6 +71,7 @@ class TelemetryService extends ChangeNotifier {
     } catch (e, stack) {
       debugPrint('Firebase inicializó en modo local/resiliente: $e\n$stack');
       _isInitialized = false;
+      _initErrorDetail = e.toString();
     }
     notifyListeners();
   }
