@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
 import 'package:kolzumo_app/core/config/app_config.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/form_validation.dart';
+import 'package:kolzumo_app/presentation/utils/items_ui/legal_policy_dialog.dart';
 import 'package:provider/provider.dart';
 
 class AuthForm extends StatelessWidget {
@@ -133,6 +134,56 @@ class AuthForm extends StatelessWidget {
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Enlaces legales obligatorios de Google Play Store
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          onPressed: () => LegalPolicyHelper.openPrivacyPolicy(
+                            context,
+                            config.privacyPolicyUrl,
+                          ),
+                          child: Text(
+                            'Política de Privacidad',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: Colors.grey.shade600,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '•',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                        ),
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          onPressed: () => LegalPolicyHelper.openTermsOfService(
+                            context,
+                            config.termsOfServiceUrl,
+                          ),
+                          child: Text(
+                            'Términos de Servicio',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: Colors.grey.shade600,
+                              decoration: TextDecoration.underline,
+                            ),
                           ),
                         ),
                       ],

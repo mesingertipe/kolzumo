@@ -28,12 +28,22 @@ class AppConfig extends ChangeNotifier {
     'DEMO_MODE_ENABLED',
     defaultValue: false,
   );
+  static const String _defaultPrivacyPolicyUrl = String.fromEnvironment(
+    'PRIVACY_POLICY_URL',
+    defaultValue: 'https://kolzumo.com.co/politica-de-privacidad',
+  );
+  static const String _defaultTermsUrl = String.fromEnvironment(
+    'TERMS_URL',
+    defaultValue: 'https://kolzumo.com.co/terminos-y-condiciones',
+  );
 
   String _apiBaseUrl = _defaultApiBaseUrl;
   String _brandName = _defaultBrandName;
   String _ticketFooter = _defaultTicketFooter;
   int _sellerProfileId = _defaultSellerProfileId;
   bool _demoModeEnabled = _defaultDemoModeEnabled;
+  String _privacyPolicyUrl = _defaultPrivacyPolicyUrl;
+  String _termsUrl = _defaultTermsUrl;
 
   // Control de versiones por Build desde Firebase Remote Config
   int _minRequiredBuild = 1;
@@ -55,6 +65,8 @@ class AppConfig extends ChangeNotifier {
   String get ticketFooter => _ticketFooter;
   int get sellerProfileId => _sellerProfileId;
   bool get demoModeEnabled => _demoModeEnabled;
+  String get privacyPolicyUrl => _privacyPolicyUrl;
+  String get termsOfServiceUrl => _termsUrl;
 
   int get minRequiredBuild => _minRequiredBuild;
   int get latestRecommendedBuild => _latestRecommendedBuild;
@@ -96,6 +108,8 @@ class AppConfig extends ChangeNotifier {
     String? storeUrlAndroid,
     String? storeUrlIos,
     bool? demoModeEnabled,
+    String? privacyPolicyUrl,
+    String? termsUrl,
   }) {
     if (apiBaseUrl != null && apiBaseUrl.trim().isNotEmpty) {
       _apiBaseUrl = apiBaseUrl.trim().replaceAll(RegExp(r'/+$'), '');
@@ -126,6 +140,22 @@ class AppConfig extends ChangeNotifier {
     }
     if (demoModeEnabled != null) {
       _demoModeEnabled = demoModeEnabled;
+    }
+    if (privacyPolicyUrl != null && privacyPolicyUrl.trim().isNotEmpty) {
+      _privacyPolicyUrl = privacyPolicyUrl.trim();
+    }
+    if (termsUrl != null && termsUrl.trim().isNotEmpty) {
+      _termsUrl = termsUrl.trim();
+    }
+    notifyListeners();
+  }
+
+  void updateLegalUrls({String? privacyPolicyUrl, String? termsUrl}) {
+    if (privacyPolicyUrl != null && privacyPolicyUrl.trim().isNotEmpty) {
+      _privacyPolicyUrl = privacyPolicyUrl.trim();
+    }
+    if (termsUrl != null && termsUrl.trim().isNotEmpty) {
+      _termsUrl = termsUrl.trim();
     }
     notifyListeners();
   }

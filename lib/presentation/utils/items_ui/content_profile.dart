@@ -13,6 +13,7 @@ import '../../../controllers/day_closing_controller.dart';
 import '../../../data/database/database.dart';
 import '../../../logic/auth_logic.dart';
 import 'daily_summary_sheet.dart';
+import 'legal_policy_dialog.dart';
 import 'seller_stats_card.dart';
 
 class ContentProfile extends StatelessWidget {
@@ -282,6 +283,54 @@ class ContentProfile extends StatelessWidget {
                       title: const Text('Más ajustes de Seguridad e Impresión'),
                       trailing: const Icon(Icons.chevron_right_rounded),
                       onTap: () => Navigator.of(context).pushNamed('/settings'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Tarjeta Legal y Privacidad (Requisito Google Play Store)
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(
+                        Icons.privacy_tip_outlined,
+                        color: AppTheme.primaryColor,
+                      ),
+                      title: const Text(
+                        'Política de Privacidad',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: const Text(
+                        'Protección de datos, GPS, Bluetooth y biometría',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => LegalPolicyHelper.openPrivacyPolicy(
+                        context,
+                        config.privacyPolicyUrl,
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.description_outlined,
+                        color: AppTheme.primaryColor,
+                      ),
+                      title: const Text(
+                        'Términos y Condiciones',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: const Text(
+                        'Condiciones de uso de la app y liquidación de ventas',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => LegalPolicyHelper.openTermsOfService(
+                        context,
+                        config.termsOfServiceUrl,
+                      ),
                     ),
                   ],
                 ),

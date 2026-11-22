@@ -122,6 +122,8 @@ class TelemetryService extends ChangeNotifier {
         'store_url_android':
             'https://play.google.com/store/apps/details?id=co.com.kolzumo.app',
         'store_url_ios': 'https://apps.apple.com',
+        'privacy_policy_url': AppConfig.instance.privacyPolicyUrl,
+        'terms_url': AppConfig.instance.termsOfServiceUrl,
       });
 
       final fetched = await remoteConfig.fetchAndActivate();
@@ -160,6 +162,8 @@ class TelemetryService extends ChangeNotifier {
       demoModeEnabled: isDemoRemote,
       storeUrlAndroid: rc.getString('store_url_android'),
       storeUrlIos: rc.getString('store_url_ios'),
+      privacyPolicyUrl: rc.getString('privacy_policy_url'),
+      termsUrl: rc.getString('terms_url'),
     );
     if (isDemoRemote) {
       DemoApiInterceptor.instance.activateDemoMode();

@@ -1,4 +1,3 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
@@ -8,6 +7,7 @@ import 'package:kolzumo_app/core/services/biometric_service.dart';
 import 'package:kolzumo_app/core/services/telemetry_service.dart';
 import 'package:kolzumo_app/core/theme/theme_controller.dart';
 import 'package:kolzumo_app/logic/auth_logic.dart';
+import 'package:kolzumo_app/presentation/utils/items_ui/legal_policy_dialog.dart';
 import 'package:kolzumo_app/presentation/utils/items_ui/menu_burguer.dart';
 import 'package:kolzumo_app/services/session_sync_service.dart';
 import 'package:provider/provider.dart';
@@ -347,6 +347,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               : 'Forzar Sincronización de Catálogos y Precios',
                         ),
                       ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Tarjeta Legal y Transparencia (Requisito Google Play Store)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.gavel_rounded,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'LEGAL Y PRIVACIDAD',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.forestDark,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.privacy_tip_outlined),
+                    title: const Text('Política de Privacidad'),
+                    subtitle: const Text(
+                      'Tratamiento de datos personales, permisos GPS y Bluetooth',
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => LegalPolicyHelper.openPrivacyPolicy(
+                      context,
+                      config.privacyPolicyUrl,
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.description_outlined),
+                    title: const Text('Términos y Condiciones del Servicio'),
+                    subtitle: const Text(
+                      'Condiciones de uso, liquidación de inventario y caja',
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => LegalPolicyHelper.openTermsOfService(
+                      context,
+                      config.termsOfServiceUrl,
                     ),
                   ),
                 ],
