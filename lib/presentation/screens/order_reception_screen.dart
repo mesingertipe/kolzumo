@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kolzumo_app/config/app_theme.dart';
 import 'package:kolzumo_app/data/database/database.dart';
-import 'package:kolzumo_app/infrastructure/models/inventario_model.dart';
 import 'package:kolzumo_app/infrastructure/models/pedido_pendiente_model.dart';
 import 'package:kolzumo_app/infrastructure/repositories/inventario_repo_db.dart';
 import 'package:kolzumo_app/logic/auth_logic.dart';
@@ -157,9 +156,10 @@ class _OrderReceptionScreenState extends State<OrderReceptionScreen> {
           ],
         ),
       );
-      if (proceed != true) return;
+      if (proceed != true || !mounted) return;
     }
 
+    if (!mounted) return;
     setState(() => _isProcessing = true);
     final ordersPending = context.read<PedidosPendientesProvider>();
     final auth = context.read<Auth>();
@@ -477,9 +477,8 @@ class _OrderReceptionScreenState extends State<OrderReceptionScreen> {
         ],
       ),
 
-      // 3. Barra de Aprobación Inferior Fija
-      bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      // 3. Barra de Aprobación Inferior Fija (Respetando el área segura del sistema Android)
+      bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -491,34 +490,41 @@ class _OrderReceptionScreenState extends State<OrderReceptionScreen> {
           ],
         ),
         child: SafeArea(
-          child: SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 3,
                 ),
-                elevation: 3,
-              ),
-              onPressed: _isProcessing ? null : _handleConfirmReceipt,
-              icon: _isProcessing
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(Icons.check_circle_outline_rounded, size: 22),
-              label: Text(
-                _isProcessing
-                    ? 'Aprobando y cargando inventario...'
-                    : 'Aprobar Carga ($totalUnits Unidades)',
-                style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.bold),
+                onPressed: _isProcessing ? null : _handleConfirmReceipt,
+                icon: _isProcessing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.check_circle_outline_rounded, size: 22),
+                label: Text(
+                  _isProcessing
+                      ? 'Aprobando y cargando inventario...'
+                      : 'Aprobar Carga ($totalUnits Unidades)',
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ),
