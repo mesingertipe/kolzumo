@@ -192,24 +192,62 @@ class _ThermalPrinterScreenState extends State<ThermalPrinterScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Dispositivos Bluetooth Vinculados
+                      // Dispositivos Bluetooth Vinculados (Android) / BLE (iOS)
                       Card(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SectionHeader(
-                              title: 'IMPRESORAS VINCULADAS',
-                              trailing: IconButton(
-                                icon: const Icon(Icons.refresh, size: 20),
-                                onPressed:
-                                    c.isLoading ? null : c.loadPairedDevices,
-                                tooltip: 'Actualizar vinculados',
-                              ),
+                              title: c.isIOS
+                                  ? 'IMPRESORAS BLUETOOTH (BLE)'
+                                  : 'IMPRESORAS VINCULADAS',
+                              trailing: c.isIOS
+                                  ? (c.isDiscovering
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        )
+                                      : TextButton.icon(
+                                          onPressed: c.startDiscovery,
+                                          icon: const Icon(
+                                            Icons.bluetooth_searching,
+                                            size: 18,
+                                          ),
+                                          label: const Text('Buscar'),
+                                        ))
+                                  : IconButton(
+                                      icon: const Icon(Icons.refresh, size: 20),
+                                      onPressed: c.isLoading
+                                          ? null
+                                          : c.loadPairedDevices,
+                                      tooltip: 'Actualizar vinculados',
+                                    ),
                             ),
                             if (c.pairedDevices.isEmpty)
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 12),
-                                child: EmptyPairedHint(),
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                  16,
+                                  c.isIOS ? 4 : 0,
+                                  16,
+                                  16,
+                                ),
+                                child: c.isIOS
+                                    ? Text(
+                                        c.isDiscovering
+                                            ? 'Escaneando impresoras Bluetooth BLE cercanas...'
+                                            : 'Enciende tu impresora térmica compatible con Bluetooth BLE y presiona "Buscar". Nota: iOS no permite descubrir impresoras Bluetooth clásico antiguas que no soporten BLE.',
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.grey,
+                                        ),
+                                      )
+                                    : const EmptyPairedHint(),
                               )
                             else
                               ...c.pairedDevices.map(
@@ -228,62 +266,66 @@ class _ThermalPrinterScreenState extends State<ThermalPrinterScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      if (!c.isIOS) ...[
+                        const SizedBox(height: 16),
 
-                      // Escaneo de nuevas impresoras Bluetooth
-                      Card(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SectionHeader(
-                              title: 'DISPOSITIVOS CERCANOS',
-                              trailing: c.isDiscovering
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
+                        // Escaneo de nuevas impresoras Bluetooth (solo Android)
+                        Card(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SectionHeader(
+                                title: 'DISPOSITIVOS CERCANOS',
+                                trailing: c.isDiscovering
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
                                         ),
+                                      )
+                                    : TextButton.icon(
+                                        onPressed: c.startDiscovery,
+                                        icon: const Icon(
+                                            Icons.bluetooth_searching,
+                                            size: 18),
+                                        label: const Text('Buscar Impresoras'),
                                       ),
-                                    )
-                                  : TextButton.icon(
-                                      onPressed: c.startDiscovery,
-                                      icon: const Icon(Icons.bluetooth_searching,
-                                          size: 18),
-                                      label: const Text('Buscar Impresoras'),
+                              ),
+                              if (c.discoveredDevices.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    4,
+                                    16,
+                                    16,
+                                  ),
+                                  child: Text(
+                                    c.isDiscovering
+                                        ? 'Escaneando impresoras Bluetooth cercanas...'
+                                        : 'Enciende tu impresora portátil (ej. MP210) y presiona "Buscar Impresoras".',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey,
                                     ),
-                            ),
-                            if (c.discoveredDevices.isEmpty)
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  16,
-                                  4,
-                                  16,
-                                  16,
-                                ),
-                                child: Text(
-                                  c.isDiscovering
-                                      ? 'Escaneando impresoras Bluetooth cercanas...'
-                                      : 'Enciende tu impresora portátil (ej. MP210) y presiona "Buscar Impresoras".',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey,
+                                  ),
+                                )
+                              else
+                                ...c.discoveredDevices.map(
+                                  (device) => DiscoveredDeviceTile(
+                                    device: device,
+                                    isBonding:
+                                        c.bondingAddress == device.address,
+                                    onPair: () => c.pairDevice(device),
                                   ),
                                 ),
-                              )
-                            else
-                              ...c.discoveredDevices.map(
-                                (device) => DiscoveredDeviceTile(
-                                  device: device,
-                                  isBonding: c.bondingAddress == device.address,
-                                  onPair: () => c.pairDevice(device),
-                                ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ),

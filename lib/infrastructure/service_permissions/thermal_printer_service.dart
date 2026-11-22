@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_classic_bluetooth/flutter_classic_bluetooth.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
@@ -8,7 +10,22 @@ class ThermalPrinterService {
 
   final FlutterClassicBluetooth _classicBluetooth;
 
-  /// Dispositivos ya vinculados, listos para conectar e imprimir.
+  bool get isIOS => !kIsWeb && Platform.isIOS;
+
+  /// En iOS, inicializa CBCentralManager y espera a que esté encendido
+  /// antes de lanzar el escaneo BLE en pairedBluetooths.
+  Future<bool> ensureBluetoothReady() async {
+    if (!isIOS) return true;
+    for (var i = 0; i < 8; i++) {
+      final enabled = await PrintBluetoothThermal.bluetoothEnabled;
+      if (enabled) return true;
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+    return await PrintBluetoothThermal.bluetoothEnabled;
+  }
+
+  /// Dispositivos ya vinculados (Android) o escaneados vía BLE (iOS),
+  /// listos para conectar e imprimir.
   Future<List<BluetoothInfo>> getPairedDevices() {
     return PrintBluetoothThermal.pairedBluetooths;
   }
@@ -20,7 +37,10 @@ class ThermalPrinterService {
 
   Future<void> startDiscovery() => _classicBluetooth.startDiscovery();
 
-  Future<void> stopDiscovery() => _classicBluetooth.stopDiscovery();
+  Future<void> stopDiscovery() async {
+    if (isIOS) return;
+    await _classicBluetooth.stopDiscovery();
+  }
 
   Future<bool> pairDevice(String address) {
     return _classicBluetooth.bondDevice(address);
@@ -37,6 +57,8 @@ class ThermalPrinterService {
   }
 
   Future<void> dispose() async {
-    await _classicBluetooth.stopDiscovery();
+    if (!isIOS) {
+      await _classicBluetooth.stopDiscovery();
+    }
   }
 }

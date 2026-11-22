@@ -114,10 +114,22 @@ class ThermalPrinterController extends ChangeNotifier {
     });
   }
 
+  bool get isIOS => _printerService.isIOS;
+
   Future<void> loadPairedDevices() async {
     isLoading = true;
     notifyListeners();
     try {
+      if (isIOS) {
+        final ready = await _printerService.ensureBluetoothReady();
+        if (!ready) {
+          pairedDevices = [];
+          _notifyMessage(
+            'Verifica que Bluetooth esté encendido y con permiso para KolZumo en Ajustes.',
+          );
+          return;
+        }
+      }
       final devices = await _printerService.getPairedDevices();
       final alreadyConnected = await _printerService.isConnected;
       pairedDevices = devices;
@@ -134,6 +146,35 @@ class ThermalPrinterController extends ChangeNotifier {
   }
 
   Future<void> startDiscovery() async {
+    if (isIOS) {
+      isDiscovering = true;
+      notifyListeners();
+      try {
+        final ready = await _printerService.ensureBluetoothReady();
+        if (!ready) {
+          _notifyMessage(
+            'Enciende Bluetooth y otorga el permiso en Ajustes > KolZumo > Bluetooth.',
+          );
+          return;
+        }
+        final devices = await _printerService.getPairedDevices();
+        final alreadyConnected = await _printerService.isConnected;
+        pairedDevices = devices;
+        isConnected = alreadyConnected;
+        if (devices.isEmpty) {
+          _notifyMessage(
+            'No se encontraron impresoras BLE cercanas. Verifica que la impresora esté encendida y sea compatible con Bluetooth BLE.',
+          );
+        }
+      } catch (e) {
+        _notifyMessage('No se pudo buscar impresoras BLE: $e');
+      } finally {
+        isDiscovering = false;
+        notifyListeners();
+      }
+      return;
+    }
+
     discoveredDevices.clear();
     isDiscovering = true;
     notifyListeners();
